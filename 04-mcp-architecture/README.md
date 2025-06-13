@@ -4,7 +4,7 @@
 
 This module introduces the Model Context Protocol (MCP) paradigm and demonstrates a foundational step towards distributed AI systems. The Model Context Protocol (MCP) represents a paradigm shift in how AI agents interact with tools and external systems. Instead of tightly coupling tool implementations within the agent code, MCP enables a distributed architecture where tools run as independent servers that agents can discover and use dynamically.
 
-**Important Note**: This implementation demonstrates core MCP concepts but is a stepping stone towards the full MCP vision. A complete production-ready MCP system would require additional components like service discovery, advanced error handling, authentication, monitoring, and more sophisticated deployment patterns.
+**Important Note**: This implementation demonstrates core MCP concepts and builds a solid architectural foundation for real-world AI agent applications. A complete enterprise MCP system would require additional components like service discovery, advanced error handling, authentication, monitoring, and more sophisticated deployment patterns.
 
 ## Quick Start
 
@@ -12,7 +12,7 @@ This module introduces the Model Context Protocol (MCP) paradigm and demonstrate
 
 ```bash
 # 1. Test the complete system
-python 04-mcp-architecture/test_mcp.py
+python 04-mcp-architecture/mcp_servers/test_mcp.py
 
 # 2. Run interactive mode (default)
 python 04-mcp-architecture/main.py
@@ -23,8 +23,8 @@ python 04-mcp-architecture/main.py --demo
 # 4. Run multi-turn demo scenarios
 python 04-mcp-architecture/main.py --multi-turn-demo
 
-# 5. Interactive multi-turn conversations
-python 04-mcp-architecture/multi_turn_demo.py --interactive
+# 5. Multi-turn demo scenarios are integrated into main.py
+# Use: python 04-mcp-architecture/main.py --multi-turn-demo
 ```
 
 ## The Problem with Embedded Tools
@@ -35,7 +35,7 @@ Remember your tool-using agent from stage 3? Every tool was:
 - Loaded into memory with your agent
 - Updated only by redeploying everything
 
-That's fine for demos. It breaks in production.
+That's fine for demos. It becomes challenging at scale.
 
 I learned this the hard way when building a weather analysis system. Different teams wanted to contribute tools - the data science team used R, the infrastructure team preferred Go, and the agricultural experts had existing Java libraries. Embedding everything in one Python app? Impossible.
 
@@ -133,9 +133,22 @@ mcp_servers/
 
 Each server is self-contained and can run independently. See the individual server files for implementation details.
 
+### Module Overview
+
+**Weather Agent Components:**
+- `weather_agent/mcp_agent.py` - Manages MCP server connections and tool invocations
+- `weather_agent/chatbot.py` - Interactive chat interface for the weather agent
+- `weather_agent/demo_scenarios.py` - Showcases single/multi-agent queries and contextual conversations
+
+**MCP Server Utilities:**
+- `mcp_servers/api_utils.py` - Async OpenMeteo client with connection pooling
+- `mcp_servers/parameters.py` - Defines common weather parameter groups
+- `mcp_servers/weather_collections.py` - Pre-configured parameter sets for specific use cases
+- `mcp_servers/utils/` - Helper utilities for date handling and display formatting
+
 ### Performance Optimization & Async Architecture
 
-The MCP servers demonstrate **production-ready async patterns** with proper lifecycle management:
+The MCP servers demonstrate **proper async patterns** with clean lifecycle management:
 
 #### Clean Async Implementation
 - **Pure async/await**: Removed all synchronous HTTP calls and mixed sync/async patterns
@@ -175,7 +188,7 @@ Each MCP server is self-contained with its own:
 - Error handling
 - Ready for independent deployment
 
-This architecture demonstrates the right balance between demo simplicity and production patterns, showing how MCP servers should be built as truly independent services.
+This architecture demonstrates the right balance between tutorial simplicity and solid architectural patterns, showing how MCP servers should be built as truly independent services.
 
 ## LangGraph Integration
 
@@ -195,7 +208,7 @@ The agent maintains conversation context across queries, enabling natural follow
 - Cross-server coordination for complex queries
 - Conversation history management
 
-See `multi_turn_demo.py` for examples of contextual conversations.
+Multi-turn conversation capabilities are demonstrated through the `--multi-turn-demo` flag in `main.py`, which uses scenarios defined in `weather_agent/demo_scenarios.py`.
 
 ## Deployment Patterns
 
@@ -207,27 +220,22 @@ Current implementation spawns MCP servers as managed subprocesses. The agent aut
 
 See `weather_agent/mcp_agent.py` for the subprocess management implementation.
 
-### Production Patterns
-For production deployments, MCP supports several patterns documented in `mcp_deployment_patterns.md`:
-- Independent server processes
-- HTTP transport (future)
-- Container deployment
-- Service discovery
-
 ## Key Implementation Files
 
 ### Core MCP Components
 - `weather_agent/mcp_agent.py` - Main MCP client implementation
 - `mcp_servers/` - Individual MCP server implementations
-- `test_mcp.py` - Integration testing
+- `mcp_servers/test_mcp.py` - Integration testing
 
 ### Demo Applications
 - `main.py` - Entry point with interactive/demo modes
-- `multi_turn_demo.py` - Contextual conversation examples
+- `weather_agent/demo_scenarios.py` - Pre-defined demo scenarios for multi-turn conversations
 
-### Documentation
-- `real_mcp.md` - Technical deep-dive into MCP protocol
-- `mcp_deployment_patterns.md` - Production deployment strategies
+### Configuration and Utilities
+- `mcp_servers/parameters.py` - Defines weather parameter groups (temperature, precipitation, agriculture)
+- `mcp_servers/weather_collections.py` - Organized parameter collections for different use cases
+- `mcp_servers/api_utils.py` - Async HTTP client for Open-Meteo API integration
+
 
 ## Examples and Testing
 
@@ -238,7 +246,7 @@ Run the demos to see MCP in action:
 - Cross-server coordination for complex analysis
 
 ### Testing Framework
-The test suite in `test_mcp.py` validates:
+The test suite in `mcp_servers/test_mcp.py` validates:
 - MCP server startup and connectivity
 - Tool discovery and invocation
 - Error handling and cleanup
@@ -247,8 +255,7 @@ The test suite in `test_mcp.py` validates:
 
 1. **Explore the code**: Examine the MCP server implementations in `mcp_servers/`
 2. **Run the demos**: Try different interaction patterns with the demo scripts
-3. **Read the details**: Dive into `real_mcp.md` for protocol specifics
-4. **Build your own**: Create custom MCP servers for your domain
+3. **Build your own**: Create custom MCP servers for your domain
 
 ## Technical Resources
 
@@ -258,4 +265,4 @@ The test suite in `test_mcp.py` validates:
 
 ---
 
-This architecture introduces the foundational concepts of MCP and demonstrates how it can enable more modular AI applications. While this implementation shows the core principles, building a full production MCP system would require significant additional work including robust service discovery, comprehensive error handling, security frameworks, monitoring systems, and enterprise deployment patterns.
+This architecture introduces the foundational concepts of MCP and demonstrates how it can enable more modular AI applications. While this implementation shows the core principles and builds a solid architectural foundation for real-world AI agent applications, a complete enterprise MCP system would require additional work including robust service discovery, comprehensive error handling, security frameworks, monitoring systems, and advanced deployment patterns.

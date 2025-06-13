@@ -113,7 +113,8 @@ if __name__ == "__main__":
         "What weather data can I get from the Open Meteo API?",
         "Fetch https://open-meteo.com/en/docs and tell me about the available APIs",
         "Get the content from https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m and analyze it",
-        "How do I use the Open Meteo historical weather API?"
+        "How do I use the Open Meteo historical weather API?",
+        "How does LlamaIndex compare to LangChain on Github and which has more stars?",
     ]
     
     print("\nExample queries you can try:")

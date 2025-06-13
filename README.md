@@ -25,7 +25,7 @@ Learn AI development through four progressive stages:
 1. **01-foundations** - Validate LangChain setup and introduce LangGraph
 2. **02-domain-applications** - Build real-world weather analysis with AI
 3. **03-tools-integration** - Add dynamic capabilities with tools
-4. **04-mcp-architecture** - Create distributed, production-ready systems
+4. **04-mcp-architecture** - Create distributed systems with solid architectural foundations
 
 Each stage builds on the previous, revealing limitations and introducing solutions.
 
@@ -115,7 +115,7 @@ python 03-tools-integration/main.py
 
 ## Stage 4: MCP Architecture
 
-**Purpose**: Introduction to distributed AI systems and the MCP paradigm - a foundational step towards production-ready architectures
+**Purpose**: Introduction to distributed AI systems and the MCP paradigm - building solid architectural foundations for real-world AI agent applications
 
 **Quick Test**:
 ```bash
@@ -137,7 +137,7 @@ python 04-mcp-architecture/weather_agent/demo_scenarios.py
 - "How does that compare to last week?"
 - "Should I irrigate my corn fields?"
 
-**Key Takeaways**: MCP fundamentals, distributed tool concepts, stepping stone to production systems
+**Key Takeaways**: MCP fundamentals, distributed tool concepts, architectural foundations for real-world applications
 
 [→ Detailed Overview](04-mcp-architecture/OVERVIEW.md) | [→ Tutorial](tutorials/04-distributed-tools.md)
 
@@ -162,7 +162,7 @@ Stage 4: MCP Introduction
 ├── MCP protocol basics
 ├── Process-isolated tools
 ├── Distributed architecture concepts
-└── Foundation for production systems
+└── Foundation for scalable AI applications
 ```
 
 ## Key Technologies
@@ -269,7 +269,7 @@ The system currently relies on JSON string parsing for Claude's responses, which
 Instead of parsing JSON strings from Claude's responses, the system should leverage Claude's native tool calling capabilities. This provides structured, type-safe function invocation with automatic parameter validation. Claude's tool calling ensures reliable execution paths, better error handling, and clearer intent communication between the AI and the application. By using @tool decorators with Pydantic models, the system gains both input validation and output structuring in a single, elegant pattern.
 
 ### Dynamic Location Support
-Currently, the MCP architecture uses fixed locations (8 pre-defined US agricultural regions) for simplicity. To make this production-ready, the system needs dynamic global location support. The fix involves creating a LocationService class that can handle any location through coordinate parsing, city/state/country geocoding via the Open-Meteo API, and fuzzy matching for common abbreviations. This would transform the system from a limited demo to a globally-capable weather intelligence platform.
+Currently, the MCP architecture uses fixed locations (8 pre-defined US agricultural regions) for simplicity. To build upon this foundation for real-world applications, the system would need dynamic global location support. The fix involves creating a LocationService class that can handle any location through coordinate parsing, city/state/country geocoding via the Open-Meteo API, and fuzzy matching for common abbreviations. This would transform the system from a limited demo to a globally-capable weather intelligence platform.
 
 ### Multi-LLM Support
 While this project initially focused on Claude for simplicity and to demonstrate specific capabilities, LangGraph and LangChain provide excellent abstractions for model-agnostic implementations. Supporting multiple LLMs (OpenAI, Gemini, Llama, etc.) would be a natural next step. This would involve abstracting the model-specific code behind LangChain's common interfaces, allowing users to choose their preferred LLM provider while maintaining all the same functionality.
@@ -282,4 +282,4 @@ While this project initially focused on Claude for simplicity and to demonstrate
 
 ---
 
-Remember: This is a learning journey. Each stage prepares you for the next. By the end, you'll understand how to build production AI systems that scale.
+Remember: This is a learning journey. Each stage prepares you for the next. By the end, you'll understand the architectural foundations needed to build scalable AI systems.
