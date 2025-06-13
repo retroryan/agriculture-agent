@@ -1,10 +1,22 @@
 # AI Weather Intelligence: A Progressive Tutorial
 
-> **📋 See a live demo in action: [sample_multi-turn-demo-output.md](sample_multi-turn-demo-output.md)**
+> **📋 See a full demo in action: [sample_multi-turn-demo-output.md](sample_multi-turn-demo-output.md)**
 
-## Key Insight
+## Overview
 
-**This project is actually a tutorial disguised as a weather application.** It teaches AI architecture patterns through progressive complexity, where each stage solves real limitations of the previous approach.
+This project is a comprehensive tutorial for building modern AI applications using LangGraph, MCP servers, and Claude. Through the lens of creating an intelligent weather application that integrates with the OpenMeteo API for real weather data, you'll learn how to architect Intelligent AI systems. It shows how to build an intelligent agricultural advisor that analyzes real-time weather data to help farmers make informed decisions about planting, irrigation, and crop management.
+
+**Key Technologies Used:**
+
+- **LangGraph** - Stateful agent orchestration framework
+- **Claude (Anthropic)** - Advanced language model for natural language understanding
+- **MCP (Model Context Protocol)** - Distributed tool architecture
+- **OpenMeteo API** - Real-time weather data integration
+- **Python 3.12** - Modern async patterns and type hints
+
+**The Value of Model Context Protocol (MCP):**
+
+The Model Context Protocol (MCP) represents a paradigm shift in how AI agents interact with tools and external systems. Instead of tightly coupling tool implementations within the agent code, MCP enables a distributed architecture where tools run as independent servers that agents can discover and use dynamically. This separation of concerns leads to more maintainable, scalable, and testable AI applications.
 
 ## Project Learning Path
 
@@ -18,6 +30,10 @@ Learn AI development through four progressive stages:
 Each stage builds on the previous, revealing limitations and introducing solutions.
 
 ## Quick Start
+
+**Prerequisites:**
+- Python 3.12.10 (install via [pyenv](https://github.com/pyenv/pyenv))
+- Anthropic API key ([get one here](https://console.anthropic.com/))
 
 ```bash
 # Setup
@@ -68,6 +84,11 @@ python 02-domain-applications/main.py --demo
 python 02-domain-applications/main.py --query "Is it too dry for corn in Iowa?"
 ```
 
+**Example queries**:
+- "How much rain did we get in Austin last week?"
+- "Is it too dry for corn in Iowa?"
+- "What's the soil moisture like in Des Moines?"
+
 **Key Takeaways**: Traditional AI patterns and their limitations
 
 [→ Detailed Overview](02-domain-applications/OVERVIEW.md) | [→ Tutorial](tutorials/02-weather-domain.md)
@@ -110,6 +131,11 @@ python 04-mcp-architecture/main.py --demo
 # Multi-turn demo scenarios
 python 04-mcp-architecture/weather_agent/demo_scenarios.py
 ```
+
+**Example multi-turn conversation**:
+- "What's the weather in Chicago?"
+- "How does that compare to last week?"
+- "Should I irrigate my corn fields?"
 
 **Key Takeaways**: MCP fundamentals, distributed tool concepts, stepping stone to production systems
 
@@ -169,12 +195,12 @@ export ANTHROPIC_API_KEY="your-claude-api-key"
 ## Project Structure
 
 ```
-weatherdata/
+agriculture-agent/
 ├── 01-foundations/          # Basic LangChain/LangGraph patterns
 ├── 02-domain-applications/  # Weather and agricultural AI
 ├── 03-tools-integration/    # Dynamic agent capabilities
 ├── 04-mcp-architecture/     # Distributed tool systems
-└── tutorials/              # Progressive learning guides
+└── tutorials/               # Progressive learning guides
 ```
 
 ## Running Tests
@@ -219,6 +245,13 @@ python 01-foundations/langgraph/basic_chatbot.py "Question?"
 python 02-domain-applications/main.py --query "Agricultural question?"
 ```
 
+## Troubleshooting
+
+**Common Issues:**
+- `ModuleNotFoundError`: Make sure you're in the project root when running commands
+- `API key not found`: Ensure your `.env` file contains `ANTHROPIC_API_KEY=sk-ant-...`
+- `Connection errors`: OpenMeteo API is free but rate-limited; wait a moment and retry
+
 ## Next Steps
 
 1. Start with [01-getting-started.md](tutorials/01-getting-started.md)
@@ -226,6 +259,20 @@ python 02-domain-applications/main.py --query "Agricultural question?"
 3. Read the OVERVIEW.md in each directory for architecture details
 4. Experiment with modifications
 5. Build your own domain-specific AI application
+
+## Key Improvements Needed
+
+### Pydantic Models for Structured Output
+The system currently relies on JSON string parsing for Claude's responses, which is fragile and error-prone. Implementing Pydantic models would provide automatic validation, type safety, and clear documentation of expected data structures. Pydantic transforms unstructured AI outputs into reliable, validated Python objects with built-in error handling. This ensures that tool inputs/outputs conform to expected schemas, making the system more robust and easier to debug.
+
+### Claude Native Tool Calling
+Instead of parsing JSON strings from Claude's responses, the system should leverage Claude's native tool calling capabilities. This provides structured, type-safe function invocation with automatic parameter validation. Claude's tool calling ensures reliable execution paths, better error handling, and clearer intent communication between the AI and the application. By using @tool decorators with Pydantic models, the system gains both input validation and output structuring in a single, elegant pattern.
+
+### Dynamic Location Support
+Currently, the MCP architecture uses fixed locations (8 pre-defined US agricultural regions) for simplicity. To make this production-ready, the system needs dynamic global location support. The fix involves creating a LocationService class that can handle any location through coordinate parsing, city/state/country geocoding via the Open-Meteo API, and fuzzy matching for common abbreviations. This would transform the system from a limited demo to a globally-capable weather intelligence platform.
+
+### Multi-LLM Support
+While this project initially focused on Claude for simplicity and to demonstrate specific capabilities, LangGraph and LangChain provide excellent abstractions for model-agnostic implementations. Supporting multiple LLMs (OpenAI, Gemini, Llama, etc.) would be a natural next step. This would involve abstracting the model-specific code behind LangChain's common interfaces, allowing users to choose their preferred LLM provider while maintaining all the same functionality.
 
 ## Additional Resources
 

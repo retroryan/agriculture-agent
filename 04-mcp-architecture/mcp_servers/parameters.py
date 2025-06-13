@@ -53,7 +53,7 @@ SOLAR_PARAMS = [
     "uv_index_clear_sky"
 ]
 
-# Predefined agricultural locations (matching NASA implementation)
+# Predefined agricultural locations
 AGRICULTURAL_LOCATIONS = {
     "Grand Island, Nebraska": {
         "coordinates": (40.9264, -98.3420),

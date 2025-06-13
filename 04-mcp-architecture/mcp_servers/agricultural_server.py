@@ -20,6 +20,26 @@ from api_utils import OpenMeteoClient
 # Create server instance
 app = Server("openmeteo-agricultural")
 
+# Server-owned client instance
+weather_client: OpenMeteoClient = None
+
+
+async def initialize_client():
+    """Initialize the weather client at server startup."""
+    global weather_client
+    weather_client = OpenMeteoClient()
+    # Ensure the client is ready
+    await weather_client.ensure_client()
+    return weather_client
+
+
+async def cleanup_client():
+    """Cleanup the weather client at server shutdown."""
+    global weather_client
+    if weather_client:
+        await weather_client.close()
+        weather_client = None
+
 
 @app.list_tools()
 async def list_tools():
@@ -65,16 +85,20 @@ async def list_tools():
 @app.call_tool()
 async def call_tool(name: str, arguments: dict):
     """Execute a tool."""
+    global weather_client
+    
     if name == "get_agricultural_conditions":
-        # Use unified API client directly
-        client = OpenMeteoClient()
+        # Ensure client is initialized
+        if weather_client is None:
+            await initialize_client()
+            
         location = arguments["location"]
         include_soil = arguments.get("include_soil", True)
         include_solar = arguments.get("include_solar", True)
         
         try:
-            # Get coordinates (using async version)
-            lat, lon = await client.get_coordinates_async(location)
+            # Get coordinates
+            lat, lon = await weather_client.get_coordinates(location)
             
             # Build parameter list based on options
             hourly_params = ["temperature_2m", "relative_humidity_2m", "precipitation", "wind_speed_10m"]
@@ -85,8 +109,8 @@ async def call_tool(name: str, arguments: dict):
             if include_solar:
                 hourly_params.extend(["shortwave_radiation", "et0_fao_evapotranspiration"])
             
-            # Get agricultural forecast data (using async version)
-            forecast_data = await client.get_forecast_async(
+            # Get agricultural forecast data
+            forecast_data = await weather_client.get_forecast(
                 latitude=lat,
                 longitude=lon,
                 hourly=hourly_params,
@@ -119,27 +143,31 @@ async def call_tool(name: str, arguments: dict):
             
         except Exception as e:
             return [{"type": "text", "text": f"Error getting agricultural conditions for {location}: {str(e)}"}]
-        finally:
-            # Clean up async client
-            await client.close()
     else:
         raise ValueError(f"Unknown tool: {name}")
 
 
 async def main():
-    """Run the MCP server."""
-    async with stdio_server() as streams:
-        await app.run(
-            streams[0],
-            streams[1],
-            InitializationOptions(
-                server_name="openmeteo-agricultural",
-                server_version="1.0.0",
-                capabilities={
-                    "tools": {}
-                }
+    """Run the MCP server with proper lifecycle management."""
+    # Initialize the client at startup
+    await initialize_client()
+    
+    try:
+        async with stdio_server() as streams:
+            await app.run(
+                streams[0],
+                streams[1],
+                InitializationOptions(
+                    server_name="openmeteo-agricultural",
+                    server_version="1.0.0",
+                    capabilities={
+                        "tools": {}
+                    }
+                )
             )
-        )
+    finally:
+        # Cleanup on shutdown
+        await cleanup_client()
 
 
 if __name__ == "__main__":

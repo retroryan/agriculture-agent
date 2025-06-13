@@ -20,6 +20,26 @@ from api_utils import OpenMeteoClient
 # Create server instance
 app = Server("openmeteo-historical")
 
+# Server-owned client instance
+weather_client: OpenMeteoClient = None
+
+
+async def initialize_client():
+    """Initialize the weather client at server startup."""
+    global weather_client
+    weather_client = OpenMeteoClient()
+    # Ensure the client is ready
+    await weather_client.ensure_client()
+    return weather_client
+
+
+async def cleanup_client():
+    """Cleanup the weather client at server shutdown."""
+    global weather_client
+    if weather_client:
+        await weather_client.close()
+        weather_client = None
+
 
 @app.list_tools()
 async def list_tools():
@@ -65,19 +85,23 @@ async def list_tools():
 @app.call_tool()
 async def call_tool(name: str, arguments: dict):
     """Execute a tool."""
+    global weather_client
+    
     if name == "get_historical_weather":
-        # Use unified API client directly
-        client = OpenMeteoClient()
+        # Ensure client is initialized
+        if weather_client is None:
+            await initialize_client()
+            
         location = arguments["location"]
         start_date = arguments["start_date"]
         end_date = arguments["end_date"]
         
         try:
-            # Get coordinates (using async version)
-            lat, lon = await client.get_coordinates_async(location)
+            # Get coordinates
+            lat, lon = await weather_client.get_coordinates(location)
             
-            # Get historical data (using async version)
-            historical_data = await client.get_historical_async(
+            # Get historical data
+            historical_data = await weather_client.get_historical(
                 latitude=lat,
                 longitude=lon,
                 start_date=start_date,
@@ -101,27 +125,31 @@ async def call_tool(name: str, arguments: dict):
             
         except Exception as e:
             return [{"type": "text", "text": f"Error getting historical data for {location}: {str(e)}"}]
-        finally:
-            # Clean up async client
-            await client.close()
     else:
         raise ValueError(f"Unknown tool: {name}")
 
 
 async def main():
-    """Run the MCP server."""
-    async with stdio_server() as streams:
-        await app.run(
-            streams[0],
-            streams[1],
-            InitializationOptions(
-                server_name="openmeteo-historical",
-                server_version="1.0.0",
-                capabilities={
-                    "tools": {}
-                }
+    """Run the MCP server with proper lifecycle management."""
+    # Initialize the client at startup
+    await initialize_client()
+    
+    try:
+        async with stdio_server() as streams:
+            await app.run(
+                streams[0],
+                streams[1],
+                InitializationOptions(
+                    server_name="openmeteo-historical",
+                    server_version="1.0.0",
+                    capabilities={
+                        "tools": {}
+                    }
+                )
             )
-        )
+    finally:
+        # Cleanup on shutdown
+        await cleanup_client()
 
 
 if __name__ == "__main__":
