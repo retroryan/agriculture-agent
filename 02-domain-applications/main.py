@@ -11,7 +11,7 @@ import sys
 sys.path.append('02-domain-applications')
 import argparse
 from utils.claude_integration import ClaudeIntegration
-from utils.display import print_colored, print_section_header
+from utils.display import print_colored, print_section_header, Colors
 from api_utils.api_client import OpenMeteoClient
 from api_utils.temperature_api import TemperatureAnalyzer
 from api_utils.precipitation_api import PrecipitationAnalyzer
@@ -43,11 +43,11 @@ def run_query(query):
     main_type = data_needs[0] if data_needs else None
     api_helper = get_api_helper(main_type)
     if not api_helper:
-        print_colored(f"No API helper found for classification: {main_type}", "red")
+        print_colored(f"No API helper found for classification: {main_type}", Colors.RED)
         return
     location = intent.get("location")
     if not location:
-        print_colored("No location provided in query. Using default location: Austin, TX.", "yellow")
+        print_colored("No location provided in query. Using default location: Austin, TX.", Colors.YELLOW)
         location = {"latitude": 30.2672, "longitude": -97.7431}
     time_range = intent.get("time_range")
     if not time_range:
@@ -57,7 +57,7 @@ def run_query(query):
         time_range = (start, end)
     results = api_helper.analyze(location, time_range)
     summary = claude.analyze_data(main_type, results)
-    print_colored("\nClaude's Analysis:", "cyan")
+    print_colored("\nClaude's Analysis:", Colors.CYAN)
     print(summary)
 
 def main():

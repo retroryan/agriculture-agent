@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MCP server for OpenMeteo weather forecast tool.
+MCP server for OpenMeteo historical weather tool.
 """
 
 import sys
@@ -18,7 +18,7 @@ from api_utils import OpenMeteoClient
 
 
 # Create server instance
-app = Server("openmeteo-forecast")
+app = Server("openmeteo-historical")
 
 # Server-owned client instance
 weather_client: OpenMeteoClient = None
@@ -46,8 +46,8 @@ async def list_tools():
     """List available tools."""
     return [
         {
-            "name": "get_weather_forecast",
-            "description": "Get weather forecast for agricultural planning",
+            "name": "get_historical_weather",
+            "description": "Get historical weather data for analysis",
             "inputSchema": {
                 "type": "object",
                 "properties": {
@@ -65,15 +65,18 @@ async def list_tools():
                         ],
                         "description": "Agricultural location to check"
                     },
-                    "days": {
-                        "type": "integer",
-                        "description": "Number of forecast days (1-16)",
-                        "default": 7,
-                        "minimum": 1,
-                        "maximum": 16
+                    "start_date": {
+                        "type": "string",
+                        "description": "Start date (YYYY-MM-DD)",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "description": "End date (YYYY-MM-DD)",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
                     }
                 },
-                "required": ["location"]
+                "required": ["location", "start_date", "end_date"]
             }
         }
     ]
@@ -84,56 +87,60 @@ async def call_tool(name: str, arguments: dict):
     """Execute a tool."""
     global weather_client
     
-    if name == "get_weather_forecast":
+    if name == "get_historical_weather":
         # Ensure client is initialized
         if weather_client is None:
             await initialize_client()
             
         location = arguments["location"]
-        days = arguments.get("days", 7)
+        start_date = arguments["start_date"]
+        end_date = arguments["end_date"]
         
         try:
             # Get coordinates
             lat, lon = await weather_client.get_coordinates(location)
             
-            # Get forecast data
-            forecast_data = await weather_client.get_forecast(
+            # Get historical data
+            historical_data = await weather_client.get_historical(
                 latitude=lat,
                 longitude=lon,
-                hourly=["temperature_2m", "relative_humidity_2m", "precipitation", "wind_speed_10m"],
-                daily=["temperature_2m_max", "temperature_2m_min", "precipitation_sum"],
-                forecast_days=days
+                start_date=start_date,
+                end_date=end_date,
+                daily=["temperature_2m_max", "temperature_2m_min", "precipitation_sum", "wind_speed_10m_max"]
             )
             
             # Format response
-            result = f"Weather forecast for {location} ({days} days):\n\n"
+            result = f"Historical weather for {location} ({start_date} to {end_date}):\n\n"
             
-            if 'daily' in forecast_data:
-                daily = forecast_data['daily']
-                for i in range(min(days, len(daily['time']))):
-                    date = daily['time'][i]
+            if 'daily' in historical_data:
+                daily = historical_data['daily']
+                for i, date in enumerate(daily['time']):
                     max_temp = daily['temperature_2m_max'][i]
                     min_temp = daily['temperature_2m_min'][i]
                     precip = daily['precipitation_sum'][i]
-                    result += f"Day {i+1} ({date}): {min_temp:.0f}-{max_temp:.0f}°C, {precip}mm rain\n"
+                    wind = daily['wind_speed_10m_max'][i]
+                    result += f"{date}: {min_temp:.0f}-{max_temp:.0f}°C, {precip}mm rain, {wind:.0f}km/h wind\n"
             
             return [{"type": "text", "text": result}]
             
         except Exception as e:
-            return [{"type": "text", "text": f"Error getting forecast for {location}: {str(e)}"}]
+            return [{"type": "text", "text": f"Error getting historical data for {location}: {str(e)}"}]
     else:
         raise ValueError(f"Unknown tool: {name}")
 
 
 async def main():
     """Run the MCP server with proper lifecycle management."""
+    # Initialize the client at startup
+    await initialize_client()
+    
     try:
         async with stdio_server() as streams:
             await app.run(
                 streams[0],
                 streams[1],
                 InitializationOptions(
-                    server_name="openmeteo-forecast",
+                    server_name="openmeteo-historical",
                     server_version="1.0.0",
                     capabilities={
                         "tools": {}
@@ -147,6 +154,6 @@ async def main():
 
 if __name__ == "__main__":
     import sys
-    print("Starting OpenMeteo Forecast MCP Server...", file=sys.stderr)
-    print("Available at: stdio://python 04-mcp-architecture/mcp_servers/forecast_server.py", file=sys.stderr)
+    print("Starting OpenMeteo Historical MCP Server...", file=sys.stderr)
+    print("Available at: stdio://python 05-advanced-mcp/mcp_servers/historical_server.py", file=sys.stderr)
     asyncio.run(main())

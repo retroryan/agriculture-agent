@@ -148,5 +148,5 @@ async def main():
 if __name__ == "__main__":
     import sys
     print("Starting OpenMeteo Forecast MCP Server...", file=sys.stderr)
-    print("Available at: stdio://python 04-mcp-architecture/mcp_servers/forecast_server.py", file=sys.stderr)
+    print("Available at: stdio://python 05-advanced-mcp/mcp_servers/forecast_server.py", file=sys.stderr)
     asyncio.run(main())
