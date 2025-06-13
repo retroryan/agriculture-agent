@@ -119,6 +119,9 @@ python 03-tools-integration/main.py
 
 **Quick Test**:
 ```bash
+# Test MCP servers
+python 04-mcp-architecture/mcp_servers/test-servers.py
+
 # Test complete system
 python 04-mcp-architecture/mcp_servers/test_mcp.py
 
@@ -133,7 +136,7 @@ python 04-mcp-architecture/weather_agent/demo_scenarios.py
 ```
 
 **Example multi-turn conversation**:
-- "What's the weather in Chicago?"
+- "What's the weather in Ames, Iowa?"
 - "How does that compare to last week?"
 - "Should I irrigate my corn fields?"
 
