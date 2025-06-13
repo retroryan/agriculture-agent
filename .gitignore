@@ -1,0 +1,250 @@
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# Poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.vim/
+.emacs.d/
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Logs
+*.log
+logs/
+log/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Weather/Satellite Data specific - Large data files
+*.tif
+*.tiff
+*.nc
+*.netcdf
+*.nc4
+*.hdf
+*.hdf4
+*.hdf5
+*.he5
+*.h5
+*.grb
+*.grb2
+*.grib
+*.grib2
+
+# Data directories
+data/downloads/
+data/cache/
+data/processed/
+data/raw/
+satellite_data/
+weather_data/
+earthdata/
+modis_data/
+landsat_data/
+sentinel_data/
+
+# Analysis outputs
+output/
+outputs/
+results/
+analysis_results/
+plots/
+figures/
+charts/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.svg
+*.pdf
+*.eps
+*.ps
+# Keep documentation images
+!docs/**/*.png
+!docs/**/*.jpg
+!docs/**/*.jpeg
+!docs/**/*.gif
+!docs/**/*.svg
+!docs/**/*.pdf
+!**/README*.png
+!**/README*.jpg
+
+# Model checkpoints and weights
+*.pkl
+*.pickle
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.model
+
+# Configuration files with secrets
+config.ini
+config.json
+secrets.json
+credentials.json
+
+# Backup files
+*.bak
+*.backup
+*~
+
+.history/
+CLAUDE.md 
+
+# Weather client cache
+weather_client/.location_cache.json
+
+# Graph visualization files
+*_graph.png
+*_graph.mmd
+*.mmd
+
+# Graph directories
+langgraph_sample/graphs/
+weatherdata_client/graphs/
+
+*.json

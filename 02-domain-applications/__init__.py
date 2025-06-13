@@ -1,0 +1,1 @@
+# This file makes 02-domain-applications a Python package
