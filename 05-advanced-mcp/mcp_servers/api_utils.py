@@ -11,6 +11,56 @@ from typing import Dict, List, Optional, Tuple, Union
 from datetime import datetime, timedelta, date
 
 
+# Helper function for servers
+async def get_coordinates(location: str) -> Optional[Dict[str, Union[str, float]]]:
+    """
+    Get coordinates for a location name.
+    Returns dict with latitude, longitude, and name, or None if not found.
+    """
+    client = OpenMeteoClient()
+    try:
+        lat, lon = await client.get_coordinates(location)
+        return {
+            "latitude": lat,
+            "longitude": lon,
+            "name": location
+        }
+    except Exception:
+        return None
+
+
+# Parameter helpers
+def get_daily_params() -> List[str]:
+    """Get standard daily parameters for forecast."""
+    return [
+        "temperature_2m_max",
+        "temperature_2m_min",
+        "precipitation_sum",
+        "rain_sum",
+        "snowfall_sum",
+        "precipitation_hours",
+        "wind_speed_10m_max",
+        "wind_gusts_10m_max",
+        "uv_index_max"
+    ]
+
+
+def get_hourly_params() -> List[str]:
+    """Get standard hourly parameters for forecast."""
+    return [
+        "temperature_2m",
+        "relative_humidity_2m",
+        "apparent_temperature",
+        "precipitation",
+        "rain",
+        "showers",
+        "snowfall",
+        "wind_speed_10m",
+        "wind_direction_10m",
+        "wind_gusts_10m"
+    ]
+
+
 class OpenMeteoClient:
     """
     Async-only client for Open-Meteo API demonstrating good patterns:
@@ -48,6 +98,23 @@ class OpenMeteoClient:
         if self._client:
             await self._client.aclose()
             self._client = None
+    
+    async def get(self, api_type: str, params: Dict) -> Dict:
+        """Generic method to get data from Open-Meteo APIs."""
+        client = await self.ensure_client()
+        
+        if api_type == "forecast":
+            url = self.forecast_url
+        elif api_type == "archive":
+            url = self.archive_url
+        elif api_type == "geocoding":
+            url = self.geocoding_url
+        else:
+            raise ValueError(f"Unknown API type: {api_type}")
+        
+        response = await client.get(url, params=params)
+        response.raise_for_status()
+        return response.json()
     
     async def get_coordinates(self, location: str) -> Tuple[float, float]:
         """

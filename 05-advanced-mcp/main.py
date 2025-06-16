@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """
-MCP Weather Demo - stdio Subprocess Architecture
+MCP Weather Demo - stdio Subprocess Architecture with Structured Output
 
-This demonstrates MCP servers running as subprocesses with stdio communication.
+This demonstrates MCP servers running as subprocesses with stdio communication
+and LangGraph Option 1 structured output.
 
 Usage:
-    python 05-advanced-mcp/main.py          # Interactive mode
-    python 05-advanced-mcp/main.py --demo   # Demo mode
+    python 05-advanced-mcp/main.py                    # Interactive mode
+    python 05-advanced-mcp/main.py --demo             # Demo mode
+    python 05-advanced-mcp/main.py --structured       # Interactive with structured output
+    python 05-advanced-mcp/main.py --demo --structured # Demo with structured output
 """
 
 import sys
@@ -16,7 +19,7 @@ sys.path.append('05-advanced-mcp')
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="MCP Weather Demo - stdio Subprocess Architecture",
+        description="MCP Weather Demo - stdio Subprocess Architecture with Structured Output",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 This demo shows how MCP servers work:
@@ -24,6 +27,12 @@ This demo shows how MCP servers work:
 - Communication via JSON-RPC over stdin/stdout
 - Tools are discovered dynamically
 - Automatic subprocess cleanup
+
+With --structured flag:
+- Shows tool calls with arguments
+- Displays raw JSON responses from MCP servers
+- Demonstrates structured output transformation
+- Implements LangGraph Option 1 approach
         """
     )
     
@@ -31,6 +40,12 @@ This demo shows how MCP servers work:
         '--demo', 
         action='store_true',
         help='Run demo with example queries'
+    )
+    
+    parser.add_argument(
+        '--structured',
+        action='store_true',
+        help='Enable structured output display showing tool calls and transformations'
     )
     
     parser.add_argument(
@@ -55,6 +70,8 @@ This demo shows how MCP servers work:
         sys.argv = [sys.argv[0]]
         if args.demo:
             sys.argv.append('--demo')
+        if args.structured:
+            sys.argv.append('--structured')
         
         asyncio.run(chatbot_main())
 

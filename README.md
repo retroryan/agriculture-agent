@@ -20,12 +20,13 @@ The Model Context Protocol (MCP) represents a paradigm shift in how AI agents in
 
 ## Project Learning Path
 
-Learn AI development through four progressive stages:
+Learn AI development through five progressive stages:
 
 1. **01-foundations** - Validate LangChain setup and introduce LangGraph
 2. **02-domain-applications** - Build real-world weather analysis with AI
 3. **03-tools-integration** - Add dynamic capabilities with tools
 4. **04-mcp-architecture** - Create distributed systems with solid architectural foundations
+5. **05-advanced-mcp** - Structured output with tool calling for production-ready AI
 
 Each stage builds on the previous, revealing limitations and introducing solutions.
 
@@ -46,6 +47,7 @@ python 01-foundations/langgraph/basic_chatbot.py              # Stage 1
 python 02-domain-applications/main.py --demo                  # Stage 2
 python 03-tools-integration/main.py                           # Stage 3
 python 04-mcp-architecture/main.py --demo                     # Stage 4
+python 05-advanced-mcp/main.py --demo                         # Stage 5
 ```
 
 ## Stage 1: Foundations
@@ -144,6 +146,53 @@ python 04-mcp-architecture/weather_agent/demo_scenarios.py
 
 [→ Detailed Overview](04-mcp-architecture/OVERVIEW.md) | [→ Tutorial](tutorials/04-distributed-tools.md)
 
+## Stage 5: Advanced MCP with Structured Output
+
+**Purpose**: Production-ready AI with structured outputs and powerful tool composition
+
+**Quick Test**:
+```bash
+# Interactive mode with structured output
+python 05-advanced-mcp/main.py --structured
+
+# Demo mode
+python 05-advanced-mcp/main.py --demo
+
+# Multi-turn conversation with memory
+python 05-advanced-mcp/main.py --multi-turn-demo
+```
+
+**The Power of Structured Output with Tool Calling**:
+
+Stage 5 represents a transformative leap in AI application architecture. By combining LangGraph's structured output capabilities (using [Option 1](https://langchain-ai.github.io/langgraph/how-tos/react-agent-structured-output/)) with MCP's distributed tool architecture, we achieve:
+
+1. **No Query Classification Needed**: Unlike Stage 2's rigid classify-then-route pattern, the LLM directly selects appropriate tools based on natural language understanding
+2. **Dynamic Location Handling**: Any location worldwide works automatically - no pre-defined location lists or hard-coded defaults
+3. **Composable Tools**: Multiple tools can work together in a single query without explicit orchestration code
+4. **Type-Safe Outputs**: Pydantic models ensure structured, validated responses alongside human-readable text
+
+**Architectural Evolution from Stage 2**:
+
+Stage 2 required extensive hard-coding:
+- Manual query classification
+- Separate analyzer classes for each data type
+- Fixed location handling (defaulting to Austin, TX)
+- Complex routing logic
+- Limited to pre-defined query patterns
+
+Stage 5's elegance:
+- LLM naturally understands intent and selects tools
+- Single agent handles all query types
+- Dynamic location resolution at runtime
+- No routing logic - just tool discovery
+- Unlimited query flexibility
+
+Imagine scaling Stage 2's approach to a full weather service - you'd need hundreds of analyzer classes, complex classification logic, and rigid query patterns. Stage 5 handles the same complexity with a simple LangGraph agent that leverages the LLM's reasoning capabilities.
+
+**Key Takeaways**: Production-ready patterns, structured outputs, the power of LLM-driven architectures
+
+[→ Detailed Overview](05-advanced-mcp/README.md)
+
 ## Architecture Evolution
 
 ```
@@ -166,6 +215,12 @@ Stage 4: MCP Introduction
 ├── Process-isolated tools
 ├── Distributed architecture concepts
 └── Foundation for scalable AI applications
+
+Stage 5: Advanced MCP
+├── Structured output with Pydantic
+├── LLM-driven tool orchestration
+├── No classification needed
+└── Production-ready patterns
 ```
 
 ## Key Technologies
@@ -203,6 +258,7 @@ agriculture-agent/
 ├── 02-domain-applications/  # Weather and agricultural AI
 ├── 03-tools-integration/    # Dynamic agent capabilities
 ├── 04-mcp-architecture/     # Distributed tool systems
+├── 05-advanced-mcp/         # Structured output and production patterns
 └── tutorials/               # Progressive learning guides
 ```
 
@@ -219,6 +275,10 @@ python 03-tools-integration/main.py
 
 # Stage 4: MCP architecture
 python 04-mcp-architecture/mcp_servers/test_mcp.py
+
+# Stage 5: Advanced MCP
+python 05-advanced-mcp/main.py --demo
+python 05-advanced-mcp/main.py --structured --multi-turn-demo
 ```
 
 ## Key Concepts by Stage
@@ -229,6 +289,7 @@ python 04-mcp-architecture/mcp_servers/test_mcp.py
 | 2 | Domain AI | Query classification + API integration |
 | 3 | Dynamic Tools | @tool decorator + conditional routing |
 | 4 | MCP Fundamentals | Process isolation + distributed tool patterns |
+| 5 | Structured Output | Pydantic models + LLM-driven orchestration |
 
 ## Quick Command Reference
 
@@ -242,6 +303,7 @@ python 03-tools-integration/basic_tools/chatbot_with_tools.py # Tool-enabled cha
 python 01-foundations/langgraph/basic_chatbot.py --demo       # LangGraph examples
 python 02-domain-applications/main.py --demo                  # Agricultural scenarios
 python 04-mcp-architecture/main.py --demo                     # MCP demonstration
+python 05-advanced-mcp/main.py --demo --structured            # Structured output demos
 
 # Single queries
 python 01-foundations/langgraph/basic_chatbot.py "Question?"
