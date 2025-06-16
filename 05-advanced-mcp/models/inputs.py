@@ -5,7 +5,7 @@ These models provide comprehensive validation for tool inputs, including
 smart defaults, constraint checking, and helpful error messages.
 """
 
-from typing import Union, List, Optional, Literal, Set
+from typing import Union, List, Optional, Literal, Set, Dict
 from datetime import date, datetime, timedelta
 from pydantic import BaseModel, Field, field_validator, model_validator
 from enum import Enum
@@ -53,17 +53,6 @@ class WeatherParameter(str, Enum):
     DAYLIGHT_DURATION = "daylight_duration"
 
 
-# Known agricultural locations - could be loaded from config
-KNOWN_LOCATIONS = {
-    "Grand Island, Nebraska": Coordinates(latitude=40.9263, longitude=-98.3420),
-    "Scottsbluff, Nebraska": Coordinates(latitude=41.8666, longitude=-103.6672),
-    "Ames, Iowa": Coordinates(latitude=42.0347, longitude=-93.6200),
-    "Cedar Rapids, Iowa": Coordinates(latitude=41.9779, longitude=-91.6656),
-    "Fresno, California": Coordinates(latitude=36.7378, longitude=-119.7871),
-    "Salinas, California": Coordinates(latitude=36.6777, longitude=-121.6555),
-    "Lubbock, Texas": Coordinates(latitude=33.5779, longitude=-101.8552),
-    "Amarillo, Texas": Coordinates(latitude=35.2220, longitude=-101.8313),
-}
 
 
 def validate_date_range(start: date, end: date) -> tuple[date, date]:
@@ -87,9 +76,20 @@ def validate_date_range(start: date, end: date) -> tuple[date, date]:
 class LocationInput(BaseModel):
     """Flexible location specification supporting multiple input formats."""
     name: Optional[str] = Field(None, description="Location name for geocoding")
-    coordinates: Optional[Coordinates] = Field(None, description="Direct coordinates")
+    coordinates: Optional[Union[Coordinates, Dict[str, float]]] = Field(None, description="Direct coordinates")
+    normalized_name: Optional[str] = Field(None, description="Normalized name for geocoding API")
     country: Optional[str] = Field(None, description="Country for disambiguation")
     state: Optional[str] = Field(None, description="State/province for disambiguation")
+    
+    @field_validator('coordinates', mode='before')
+    @classmethod
+    def validate_coordinates(cls, v):
+        """Convert dict to Coordinates if needed."""
+        if v is None:
+            return None
+        if isinstance(v, dict):
+            return Coordinates(**v)
+        return v
     
     @model_validator(mode='after')
     def validate_location_spec(self) -> 'LocationInput':
@@ -109,22 +109,13 @@ class LocationInput(BaseModel):
                 state=self.state
             )
         
-        # If only name provided, check known locations
-        if self.name in KNOWN_LOCATIONS:
-            return LocationInfo(
-                name=self.name,
-                coordinates=KNOWN_LOCATIONS[self.name],
-                country=self.country,
-                state=self.state
-            )
-        
         # Would normally geocode here
-        raise ValueError(f"Unknown location: {self.name}. Geocoding not implemented in this example.")
+        raise ValueError(f"Location coordinates required. Location '{self.name}' needs geocoding.")
 
 
 class ForecastToolInput(BaseModel):
     """Validated input for weather forecast tool."""
-    location: Union[str, LocationInput, Coordinates] = Field(
+    location: Union[str, LocationInput, Coordinates, Dict] = Field(
         ...,
         description="Location as string, coordinates, or structured input"
     )
@@ -153,15 +144,15 @@ class ForecastToolInput(BaseModel):
     
     @field_validator('location')
     @classmethod
-    def validate_location(cls, v: Union[str, LocationInput, Coordinates]) -> LocationInput:
+    def validate_location(cls, v: Union[str, LocationInput, Coordinates, Dict]) -> LocationInput:
         """Convert location to standardized format."""
         if isinstance(v, str):
-            # Check if it's a known location
-            if v in KNOWN_LOCATIONS:
-                return LocationInput(name=v, coordinates=KNOWN_LOCATIONS[v])
             return LocationInput(name=v)
         elif isinstance(v, Coordinates):
             return LocationInput(coordinates=v)
+        elif isinstance(v, dict):
+            # Handle dict that might contain location data
+            return LocationInput(**v)
         return v
     
     @field_validator('parameters')
@@ -238,8 +229,6 @@ class HistoricalToolInput(BaseModel):
     def validate_location(cls, v: Union[str, LocationInput, Coordinates]) -> LocationInput:
         """Convert location to standardized format."""
         if isinstance(v, str):
-            if v in KNOWN_LOCATIONS:
-                return LocationInput(name=v, coordinates=KNOWN_LOCATIONS[v])
             return LocationInput(name=v)
         elif isinstance(v, Coordinates):
             return LocationInput(coordinates=v)
@@ -306,8 +295,6 @@ class AgriculturalToolInput(BaseModel):
     def validate_location(cls, v: Union[str, LocationInput, Coordinates]) -> LocationInput:
         """Convert location to standardized format."""
         if isinstance(v, str):
-            if v in KNOWN_LOCATIONS:
-                return LocationInput(name=v, coordinates=KNOWN_LOCATIONS[v])
             return LocationInput(name=v)
         elif isinstance(v, Coordinates):
             return LocationInput(coordinates=v)

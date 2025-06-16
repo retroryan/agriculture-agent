@@ -20,13 +20,15 @@ class Coordinates(BaseModel):
 
 
 class LocationInfo(BaseModel):
-    """Complete location information."""
+    """Complete location information with enhanced query classification support."""
     name: str = Field(..., description="Human-readable location name")
-    coordinates: Coordinates
+    coordinates: Optional[Coordinates] = Field(None, description="Geographic coordinates")
     country: Optional[str] = Field(None, description="Country name")
     state: Optional[str] = Field(None, description="State or province")
     timezone: Optional[str] = Field(None, description="IANA timezone identifier")
     elevation: Optional[float] = Field(None, description="Elevation in meters")
+    normalized_name: Optional[str] = Field(None, description="Normalized name for geocoding API")
+    confidence: float = Field(1.0, ge=0.0, le=1.0, description="Confidence in location identification")
     
     def display_name(self) -> str:
         """Get a formatted display name."""
@@ -36,6 +38,14 @@ class LocationInfo(BaseModel):
         if self.country:
             parts.append(self.country)
         return ", ".join(parts)
+    
+    def has_coordinates(self) -> bool:
+        """Check if coordinates are available."""
+        return self.coordinates is not None
+    
+    def get_geocoding_name(self) -> str:
+        """Get the best name for geocoding."""
+        return self.normalized_name or self.name
 
 
 class WeatherDataPoint(BaseModel):

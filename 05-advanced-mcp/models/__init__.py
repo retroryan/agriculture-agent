@@ -44,6 +44,10 @@ from .metadata import (
     WeatherAggregations,
 )
 
+from .queries import (
+    EnhancedQueryClassification,
+)
+
 __all__ = [
     # Weather models
     "WeatherDataPoint",
@@ -73,4 +77,6 @@ __all__ = [
     "ExtremeEvent",
     "Trend",
     "WeatherAggregations",
+    # Query models
+    "EnhancedQueryClassification",
 ]

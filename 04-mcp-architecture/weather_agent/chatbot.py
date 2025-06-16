@@ -54,10 +54,49 @@ async def interactive_mode():
     """Run the chatbot in interactive mode."""
     chatbot = SimpleWeatherChatbot()
     
-    # Import agricultural locations
-    import os
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mcp_servers'))
-    from parameters import AGRICULTURAL_LOCATIONS
+    # Agricultural locations for demo
+    AGRICULTURAL_LOCATIONS = {
+        "Grand Island, Nebraska": {
+            "coordinates": (40.9264, -98.3420),
+            "crops": "corn/soybeans",
+            "state": "Nebraska"
+        },
+        "Scottsbluff, Nebraska": {
+            "coordinates": (41.8666, -103.6672),
+            "crops": "sugar beets/corn",
+            "state": "Nebraska"
+        },
+        "Ames, Iowa": {
+            "coordinates": (42.0347, -93.6200),
+            "crops": "corn/soybeans",
+            "state": "Iowa"
+        },
+        "Cedar Rapids, Iowa": {
+            "coordinates": (41.9779, -91.6656),
+            "crops": "corn/soybeans",
+            "state": "Iowa"
+        },
+        "Fresno, California": {
+            "coordinates": (36.7468, -119.7726),
+            "crops": "grapes/almonds",
+            "state": "California"
+        },
+        "Salinas, California": {
+            "coordinates": (36.6777, -121.6555),
+            "crops": "lettuce/strawberries",
+            "state": "California"
+        },
+        "Lubbock, Texas": {
+            "coordinates": (33.5779, -101.8552),
+            "crops": "cotton/sorghum",
+            "state": "Texas"
+        },
+        "Amarillo, Texas": {
+            "coordinates": (35.2220, -101.8313),
+            "crops": "wheat/cattle",
+            "state": "Texas"
+        }
+    }
     
     print("🌤️  MCP Weather Chatbot")
     print("=" * 50)

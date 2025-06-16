@@ -112,7 +112,7 @@ async def run_basic_demos():
         },
         {
             "title": "Historical Agent Example", 
-            "query": "How much rain did Ames, Iowa get last month?",
+            "query": "How much rain did Des Moines, Iowa get last month?",
             "expected_agent": "Historical",
             "explanation": "Past weather queries go to the Historical Agent"
         },
@@ -232,11 +232,11 @@ async def run_mcp_multi_turn_demo():
         
         # Scenario 1: Corn Planting Decision in Iowa
         await demo.run_scenario(
-            "Corn Planting Decision in Ames, Iowa",
+            "Corn Planting Decision in Des Moines, Iowa",
             [
-                "What's the weather forecast for Ames, Iowa for the next week?",
+                "What's the weather forecast for Des Moines, Iowa for the next week?",
                 "Based on that forecast, is it a good time to plant corn?",
-                f"How does this week's forecast compare to historical data for from {last_year_start} to {last_year_end}?",
+                f"How does this week's forecast compare to historical data from {last_year_start} to {last_year_end}?",
                 "What about current soil moisture conditions?",
                 "Given all this information, should I plant corn this week or wait?"
             ]
