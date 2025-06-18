@@ -1,0 +1,17 @@
+# Core LangChain and LangGraph - Versions unpinned to resolve a deep dependency conflict
+langchain
+langchain-core
+langgraph
+langchain-anthropic
+
+# New MCP over HTTP packages
+fastmcp==2.8.1
+
+# Existing MCP over stdio packages (retained for other servers)
+# The mcp package includes the AsyncMcpClient
+langchain-mcp-adapters
+mcp>=1.1.2
+#langchain-mcp>=0.2.0
+
+# Core server, client, and utility dependencies
+uvicorn~=0.29.0
