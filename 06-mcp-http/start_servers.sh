@@ -1,8 +1,13 @@
 #!/bin/bash
 # Start all FastMCP servers in the background and pipe outputs to logs directory
 
-LOGDIR="$(dirname "$0")/logs"
+# Get the directory of this script
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+LOGDIR="$SCRIPT_DIR/logs"
 mkdir -p "$LOGDIR"
+
+# Change to the script directory to ensure relative paths work
+cd "$SCRIPT_DIR"
 
 # Start forecast server on port 8000
 nohup python mcp_servers/forecast_server.py --port 8000 > "$LOGDIR/forecast_server.log" 2>&1 &

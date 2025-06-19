@@ -37,6 +37,14 @@ async def main():
                             "type": "string",
                             "description": "Location name (e.g., 'Des Moines, Iowa')"
                         },
+                        "latitude": {
+                            "type": "number",
+                            "description": "Latitude (optional, overrides location if provided)"
+                        },
+                        "longitude": {
+                            "type": "number",
+                            "description": "Longitude (optional, overrides location if provided)"
+                        },
                         "days": {
                             "type": "integer",
                             "description": "Number of forecast days (1-16)",
@@ -57,16 +65,21 @@ async def main():
         
         try:
             location = arguments.get("location", "")
+            lat = arguments.get("latitude")
+            lon = arguments.get("longitude")
             days = min(max(arguments.get("days", 7), 1), 16)
-            
-            # Get coordinates
-            coords = await get_coordinates(location)
-            if not coords:
-                return [{
-                    "type": "text",
-                    "text": f"Could not find location: {location}. Please try a major city name."
-                }]
-            
+
+            # Phase 2: Use coordinates if provided, else geocode
+            if lat is not None and lon is not None:
+                coords = {"latitude": lat, "longitude": lon, "name": location or f"{lat},{lon}"}
+            else:
+                coords = await get_coordinates(location)
+                if not coords:
+                    return [{
+                        "type": "text",
+                        "text": f"Could not find location: {location}. Please try a major city name."
+                    }]
+
             # Get forecast data
             params = {
                 "latitude": coords["latitude"],

@@ -65,12 +65,31 @@ def extract_agents_used(response: str) -> List[str]:
         agents.append("Agricultural")
     return agents if agents else ["Unknown"]
 
-async def run_single_query(agent: MCPWeatherAgent, query: str, expected_agent: str):
+async def run_single_query(agent: MCPWeatherAgent, query: str, expected_agent: str, structured: bool = False):
     """Run a single query and display results."""
     print_query(query)
     
     start_time = time.time()
-    response = await agent.query(query)
+    if structured:
+        # Determine format based on query content
+        response_format = "agriculture" if any(
+            word in query.lower() 
+            for word in ['plant', 'soil', 'crop', 'farm', 'grow', 'moisture', 'evapotranspiration']
+        ) else "forecast"
+        
+        print(f"{Colors.BLUE}📊 Using structured output format: {response_format}{Colors.ENDC}")
+        structured_response = await agent.query_structured(query, response_format=response_format)
+        
+        # Display structured data summary
+        print(f"{Colors.MAGENTA}🏗️  Structured Output:{Colors.ENDC}")
+        print(f"  Type: {type(structured_response).__name__}")
+        print(f"  Location: {structured_response.location}")
+        if hasattr(structured_response, 'planting_conditions'):
+            print(f"  Planting Conditions: {structured_response.planting_conditions[:100]}...")
+        
+        response = structured_response.summary
+    else:
+        response = await agent.query(query)
     elapsed_time = time.time() - start_time
     
     # Determine which agents were actually used
@@ -166,9 +185,10 @@ async def run_basic_demos():
 class MultiTurnDemo:
     """Demonstrates multi-turn conversations with MCP servers."""
     
-    def __init__(self):
+    def __init__(self, structured: bool = False):
         self.agent = MCPWeatherAgent()
         self.conversation_history = []
+        self.structured = structured
     
     async def initialize(self):
         """Initialize MCP connections."""
@@ -183,7 +203,21 @@ class MultiTurnDemo:
         print(f"{Colors.BLUE}💭 Thinking...{Colors.ENDC}")
         
         # Get response
-        response = await self.agent.query(query)
+        if self.structured:
+            # Determine format based on query content
+            response_format = "agriculture" if any(
+                word in query.lower() 
+                for word in ['plant', 'soil', 'crop', 'farm', 'grow', 'moisture', 'evapotranspiration']
+            ) else "forecast"
+            
+            print(f"{Colors.MAGENTA}📊 Using structured format: {response_format}{Colors.ENDC}")
+            structured_response = await self.agent.query_structured(query, response_format=response_format)
+            
+            # Show structured data preview
+            print(f"{Colors.CYAN}🏗️  Structured data: {type(structured_response).__name__}{Colors.ENDC}")
+            response = structured_response.summary
+        else:
+            response = await self.agent.query(query)
         
         # Display response
         print(f"{Colors.GREEN}🤖 Assistant:{Colors.ENDC} {response}")
@@ -216,9 +250,9 @@ class MultiTurnDemo:
         await self.agent.cleanup()
 
 
-async def run_mcp_multi_turn_demo():
+async def run_mcp_multi_turn_demo(structured: bool = False):
     """Demo: MCP-based multi-turn conversations with agricultural planning context."""
-    demo = MultiTurnDemo()
+    demo = MultiTurnDemo(structured=structured)
     
     # Calculate date ranges for queries
     today = datetime.now()
@@ -276,6 +310,8 @@ async def run_mcp_multi_turn_demo():
         print(f"  • Total conversations: {len(demo.conversation_history)}")
         print(f"  • Scenarios completed: 3")
         print(f"  • MCP servers used: forecast, historical, agricultural")
+        if structured:
+            print(f"  • Structured output: ENABLED")
         
     finally:
         await demo.cleanup()

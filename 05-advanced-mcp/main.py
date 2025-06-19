@@ -61,7 +61,7 @@ With --structured flag:
     # Handle multi-turn demo
     if args.multi_turn_demo:
         from weather_agent.demo_scenarios import run_mcp_multi_turn_demo
-        asyncio.run(run_mcp_multi_turn_demo())
+        asyncio.run(run_mcp_multi_turn_demo(structured=args.structured))
     else:
         # Import and run the chatbot
         from weather_agent.chatbot import main as chatbot_main

@@ -179,12 +179,43 @@ response2 = await agent.query(
 
 ## Testing
 
-### Comprehensive Test Suites
+### Run All Tests
+```bash
+# Run all tests in sequence with comprehensive summary
+cd 05-advanced-mcp
+python tests/run_all_tests.py
+
+# This runs:
+# - Simple Coordinate Test
+# - Coordinate Provision Test
+# - Coordinate Handling Test
+# - Coordinates General Test
+# - Diverse Cities Test
+```
+
+### Run Individual Test Suites
+
+**Coordinate and LLM Tests:**
+```bash
+cd 05-advanced-mcp
+
+# Test simple coordinate handling
+python tests/test_simple_coordinate.py
+
+# Test coordinate provision by LLM
+python tests/test_coordinate_usage.py
+
+# Test diverse global cities
+python tests/test_diverse_cities.py
+
+# Test coordinate handling features
+python tests/test_coordinate_handling.py
+```
 
 **MCP Server Tests:**
 ```bash
 # Test all server functionality
-python mcp_servers/tests/test_mcp_servers.py
+python tests/test_mcp_servers.py
 
 # Covers:
 # - Basic JSON response validation
@@ -197,7 +228,7 @@ python mcp_servers/tests/test_mcp_servers.py
 **Agent Tests:**
 ```bash
 # Test agent functionality  
-python weather_agent/tests/test_mcp_agent.py
+python tests/test_mcp_agent.py
 
 # Covers:
 # - Agent initialization and setup
@@ -211,7 +242,7 @@ python weather_agent/tests/test_mcp_agent.py
 **Structured Output Demo:**
 ```bash
 # Interactive structured output demonstration
-python weather_agent/tests/test_structured_output_demo.py
+python tests/test_structured_output_demo.py
 
 # Demonstrates:
 # - Weather forecasts with typed fields
@@ -219,6 +250,12 @@ python weather_agent/tests/test_structured_output_demo.py
 # - Comparison between text and structured outputs
 # - JSON serialization and validation
 ```
+
+### Test Requirements
+- All tests require `ANTHROPIC_API_KEY` to be set in your `.env` file
+- Tests will start MCP servers as subprocesses
+- Some tests make real API calls to Open-Meteo
+- The full test suite takes several minutes due to LLM interactions
 
 ## Structured Output Models
 

@@ -57,7 +57,7 @@ class DailyForecast(BaseModel):
 class OpenMeteoResponse(BaseModel):
     """Structured response consolidating Open-Meteo data."""
     location: str = Field(..., description="Location name")
-    coordinates: Optional[Dict[str, float]] = Field(None, description="Latitude and longitude")
+    coordinates: Optional[Any] = Field(None, description="Latitude and longitude")
     timezone: Optional[str] = Field(None, description="Timezone")
     current_conditions: Optional[WeatherCondition] = Field(None, description="Current weather")
     daily_forecast: Optional[List[DailyForecast]] = Field(None, description="Daily forecast data")
@@ -110,26 +110,29 @@ class MCPWeatherAgent:
         
         # Enhanced system message for the agent that works with pre-classified queries
         self.system_message = SystemMessage(
-            content="""You are a helpful weather and agricultural assistant powered by AI.
-
-IMPORTANT: When users ask about weather, ALWAYS use the available tools to get data. The tools provide:
-- Weather forecasts (current conditions and predictions up to 16 days)
-- Historical weather data (past weather patterns and trends)
-- Agricultural conditions (soil moisture, evapotranspiration, growing degree days)
-
-For every weather query:
-1. ALWAYS call the appropriate tool(s) first to get real data
-2. Use the data from tools to provide accurate, specific answers
-3. Focus on agricultural applications like planting decisions, irrigation scheduling, frost warnings, and harvest planning
-
-Tool Usage Guidelines:
-- For current/future weather → use get_weather_forecast tool
-- For past weather → use get_historical_weather tool
-- For soil/agricultural conditions → use get_agricultural_conditions tool
-- For complex queries → use multiple tools to gather comprehensive data
-
-Location context may be provided in [brackets] to help with disambiguation.
-Always prefer calling tools with this context over asking for clarification."""
+            content=(
+                "You are a helpful weather and agricultural assistant powered by AI.\n\n"
+                "IMPORTANT: When users ask about weather, ALWAYS use the available tools to get data. The tools provide:\n"
+                "- Weather forecasts (current conditions and predictions up to 16 days)\n"
+                "- Historical weather data (past weather patterns and trends)\n"
+                "- Agricultural conditions (soil moisture, evapotranspiration, growing degree days)\n\n"
+                "For every weather query:\n"
+                "1. ALWAYS call the appropriate tool(s) first to get real data\n"
+                "2. Use the data from tools to provide accurate, specific answers\n"
+                "3. Focus on agricultural applications like planting decisions, irrigation scheduling, frost warnings, and harvest planning\n\n"
+                "Tool Usage Guidelines:\n"
+                "- For current/future weather → use get_weather_forecast tool\n"
+                "- For past weather → use get_historical_weather tool\n"
+                "- For soil/agricultural conditions → use get_agricultural_conditions tool\n"
+                "- For complex queries → use multiple tools to gather comprehensive data\n\n"
+                "Location context may be provided in [brackets] to help with disambiguation.\n"
+                "Always prefer calling tools with this context over asking for clarification.\n\n"
+                "COORDINATE HANDLING:\n"
+                "- When users mention coordinates (lat/lon, latitude/longitude), ALWAYS pass them to tools\n"
+                "- For faster responses, provide latitude/longitude coordinates for any location you know\n"
+                "- You have extensive geographic knowledge - use it to provide coordinates for cities worldwide\n"
+                "- If you're unsure of exact coordinates, let the tools handle geocoding instead"
+            )
         )
         
     async def initialize(self):
@@ -284,6 +287,9 @@ Always prefer calling tools with this context over asking for clarification."""
             Based on the weather data provided, create a structured weather forecast response.
             Extract current conditions, daily forecasts, and location information.
             Consolidate all Open-Meteo data into the structured format.
+            
+            IMPORTANT: If coordinates are not available or are null, omit the coordinates field entirely 
+            rather than including null values.
             
             {format_instructions}
             

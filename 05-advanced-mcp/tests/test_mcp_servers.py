@@ -16,12 +16,12 @@ import asyncio
 from datetime import date, timedelta, datetime
 from pathlib import Path
 from typing import Optional, Dict, Any, List
+import os
 
-# Add parent directories to path
-sys.path.append(str(Path(__file__).parent.parent))
-sys.path.append(str(Path(__file__).parent.parent.parent))
+# Add parent directory to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from api_utils import OpenMeteoClient
+from mcp_servers.api_utils import OpenMeteoClient
 
 # Import models for structured testing (if available)
 try:

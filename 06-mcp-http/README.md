@@ -1,405 +1,242 @@
-# Stage 6: FastMCP HTTP Architecture (Upgrade from Stage 5)
+# Stage 6: FastMCP HTTP Architecture with Coordinate Handling
+
+## Overview
+
+Stage 6 represents a **major architectural upgrade** from Stage 5's stdio-based MCP servers to modern HTTP-based FastMCP servers. This transformation provides:
+
+1. **HTTP Architecture**: Replaces stdio/subprocess communication with clean HTTP APIs
+2. **FastMCP Integration**: All servers now use FastMCP's `@app.tool()` decorator pattern
+3. **Coordinate Handling**: New feature allowing LLM to provide coordinates directly for well-known locations
+4. **Process Isolation**: Each server runs as an independent HTTP service on its own port
+5. **Better Scalability**: HTTP servers can be deployed and scaled independently
+
+### Key Architectural Changes from Stage 5
+
+| Feature | Stage 5 (stdio) | Stage 6 (HTTP) |
+|---------|----------------|----------------|
+| Communication | stdio pipes via subprocess | HTTP requests |
+| Server Framework | `mcp.server.stdio` | `fastmcp` with HTTP |
+| Tool Definition | `@app.list_tools()` | `@app.tool()` decorator |
+| Process Model | Subprocess management | Independent HTTP servers |
+| Client | `MultiServerMCPClient` | FastMCP HTTP clients |
+| Ports | N/A (stdio) | 8000, 8001, 8002 |
 
 ## Quick Start
 
+### Prerequisites
+- Python 3.12.10 (via pyenv)
+- ANTHROPIC_API_KEY environment variable set
+- `.env` file with your API key
+
+### Installation
 ```bash
-# Prerequisites: Python 3.12.10 and ANTHROPIC_API_KEY set up
+# Set Python version
+pyenv local 3.12.10
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Run demo with structured output logging
-python main.py --demo --structured
+# Create .env file
+echo "ANTHROPIC_API_KEY=your-key-here" > .env
+```
 
-# Interactive mode with structured output
-python main.py --structured
-# Type 'structured' to toggle on/off during chat
+### Running the Application
 
-# Run existing demos (backward compatible)
+#### 1. Start MCP Servers
+```bash
+# Start all three MCP servers (runs in background)
+./start_servers.sh
+
+# Servers will run on:
+# - Forecast server: http://127.0.0.1:8000
+# - Historical server: http://127.0.0.1:8001
+# - Agricultural server: http://127.0.0.1:8002
+```
+
+#### 2. Stop MCP Servers
+```bash
+# Stop all MCP servers
+./stop_servers.sh
+
+# Stop servers and clean up logs
+./stop_servers.sh --clean-logs
+```
+
+#### 3. Run the Weather Agent
+```bash
+# Interactive mode
+python main.py
+
+# Demo mode (runs predefined scenarios)
 python main.py --demo
 
-# Test structured output functionality
-python weather_agent/tests/test_structured_output_demo.py
+# Multi-turn conversation demo
+python main.py --multi-turn-demo
+
+# Query mode
+python main.py --query "What's the weather in Tokyo?"
 ```
 
-### Key Features Demonstrated
-
-1. **Tool Call Transparency**: See exactly which MCP tools are called with what arguments
-2. **Raw JSON Visibility**: View the actual Open-Meteo API responses from MCP servers
-3. **Structured Output Transformation**: Watch raw JSON transform into typed Pydantic models
-4. **LangGraph Option 1**: Experience the power of structured output for tool calling
-
-## Evolution from Stage 5
-
-Stage 6 is a major architectural upgrade that replaces all stdio-based MCP servers with modern FastMCP HTTP servers. While Stage 5 focused on structured output capabilities, Stage 6 enhances the architecture for better performance, scalability, and ease of use.
-
-### Key Upgrades
-
-- **All MCP servers (forecast, historical, agricultural) now use FastMCP and run as HTTP servers.**
-- **No more subprocess or stdio communication.** The agent talks to each server via HTTP using the FastMCP Python client.
-- **Each server exposes its tool(s) using FastMCP's @app.tool() decorator and stateless HTTP mode.**
-- **The agent is now configured with three HTTP endpoints:**
-  - `forecast_server.py` (default: http://127.0.0.1:8000)
-  - `historical_server.py` (default: http://127.0.0.1:8001)
-  - `agricultural_server.py` (default: http://127.0.0.1:8002)
-- **All tool calls are now HTTP requests, not process pipes.**
-- **The chatbot and agent are updated to use only HTTP tools.**
-- **No more MultiServerMCPClient or stdio config.**
-- **Cleaner, more scalable, and production-ready architecture.**
-
-#### FastMCP Usage Pattern
-
-- Each server is a FastMCP app with one or more @app.tool() endpoints.
-- Servers are started independently (each on its own port).
-- The agent uses the FastMCP Python client to call tools on each server by name.
-- All tool calls are async HTTP requests, making the system scalable and cloud-ready.
-
-#### Example: Starting All Servers
+### Running Tests
 
 ```bash
-# In three separate terminals (or use a process manager)
-python mcp_servers/forecast_server.py --port 8000
-python mcp_servers/historical_server.py --port 8001
-python mcp_servers/agricultural_server.py --port 8002
+# Start servers first (if not already running)
+./start_servers.sh
+
+# Run all tests
+python tests/run_all_tests.py
+
+# Run individual tests (from project root)
+python tests/test_mcp_simple.py        # Core MCP functionality
+python tests/test_agent_simple.py      # Basic agent integration
+python tests/test_coordinates.py       # Coordinate handling
+python tests/test_diverse_cities.py    # Geographic knowledge
+python tests/test_error_handling.py    # Error scenarios
 ```
 
-#### Example: Agent Initialization
+## Key Features
 
+### 1. Coordinate Handling
+All MCP servers now accept optional `latitude` and `longitude` parameters:
+- When coordinates are provided, they're used directly (bypassing geocoding)
+- When only location is provided, geocoding is performed
+- The LLM is encouraged to provide coordinates for well-known locations
+
+### 2. FastMCP HTTP Architecture
+- Each server runs as an independent HTTP service
+- Clean RESTful API endpoints using FastMCP's `@app.tool()` decorator
+- No subprocess management or stdio communication
+- Async HTTP requests for better performance
+
+### 3. Server Management
+- Simple shell scripts for starting/stopping servers
+- Automatic log management
+- Process isolation for stability
+
+## Architecture Details
+
+### Server Endpoints
+- **Forecast Server** (port 8000): Current and future weather (up to 16 days)
+- **Historical Server** (port 8001): Past weather data (5+ days old)
+- **Agricultural Server** (port 8002): Soil moisture, evapotranspiration, growing conditions
+
+### Coordinate Handling Flow
+```
+User Query → LLM → Extract Location/Coordinates → MCP Server
+                                                      ↓
+                                          Coordinates provided?
+                                               ↙         ↘
+                                            Yes           No
+                                             ↓            ↓
+                                      Use directly    Geocode location
+                                             ↘         ↙
+                                           Fetch weather data
+```
+
+### FastMCP Server Pattern
 ```python
-from weather_agent.mcp_agent import MCPWeatherAgent
-agent = MCPWeatherAgent(
-    forecast_server_url="http://127.0.0.1:8000",
-    historical_server_url="http://127.0.0.1:8001",
-    agricultural_server_url="http://127.0.0.1:8002"
-)
-await agent.initialize()
+from fastmcp import FastMCP
+
+app = FastMCP("weather-forecast", dependencies=["httpx"])
+
+@app.tool()
+async def get_weather_forecast(
+    location: str,
+    latitude: Optional[float] = None,
+    longitude: Optional[float] = None,
+    days: int = 7
+) -> Dict[str, Any]:
+    """Get weather forecast with optional coordinate override."""
+    # Implementation here
 ```
 
-#### Why FastMCP HTTP?
-- **Stateless, scalable, and cloud-native**
-- **No process management headaches**
-- **Easy to deploy each server independently**
-- **Standardized tool interface for LLMs and agents**
-- **Cleaner code and easier debugging**
-
-## Architecture Overview
-
-### Directory Structure (Key Files)
+## Project Structure
 ```
-06-fastmcp-http/
-├── models/                    # Pydantic models for structured output
-│   ├── weather.py            # Core weather data structures
-│   ├── responses.py          # Response format models  
-│   ├── inputs.py             # Input validation models
-│   ├── metadata.py           # Statistical/quality metrics
-│   └── (additional supporting models)
-├── mcp_servers/              # Simplified MCP server implementations
-│   ├── forecast_server.py    # Returns raw forecast JSON
-│   ├── historical_server.py  # Returns raw historical JSON
-│   ├── agricultural_server.py # Returns raw agricultural JSON
-│   ├── api_utils.py          # Shared Open-Meteo client
-│   └── tests/                # Consolidated server tests
-│       └── test_mcp_servers.py # Comprehensive server test suite
-├── weather_agent/            # Enhanced agent with structured output
-│   ├── mcp_agent.py         # Agent with both text and structured methods
-│   ├── chatbot.py           # Interactive interface with structured output support
-│   └── tests/               # Consolidated agent tests
-│       ├── test_mcp_agent.py # Comprehensive agent test suite
-│       └── test_structured_output_demo.py # Structured output demos
-└── main.py                  # Entry point (same interface as Stage 4)
+06-mcp-http/
+├── mcp_servers/              # FastMCP HTTP servers
+│   ├── forecast_server.py    # Weather forecast server
+│   ├── historical_server.py  # Historical weather server
+│   ├── agricultural_server.py # Agricultural conditions server
+│   └── api_utils.py          # Shared Open-Meteo client
+├── weather_agent/            # LangGraph agent implementation
+│   ├── mcp_agent.py         # Core agent with MCP integration
+│   ├── chatbot.py           # Interactive CLI interface
+│   └── demo_scenarios.py    # Predefined test scenarios
+├── tests/                   # Test suite
+│   ├── test_mcp_simple.py   # Core MCP functionality
+│   ├── test_agent_simple.py # Agent integration
+│   ├── test_coordinates.py  # Coordinate handling
+│   ├── test_diverse_cities.py # Geographic knowledge
+│   ├── test_error_handling.py # Error scenarios
+│   └── run_all_tests.py     # Test runner
+├── logs/                    # Server logs (created at runtime)
+├── start_servers.sh         # Start all MCP servers
+├── stop_servers.sh          # Stop all MCP servers
+├── main.py                  # Main entry point
+└── requirements.txt         # Python dependencies
 ```
-
-### Data Flow (LangGraph Option 1)
-
-**Traditional Text Response:**
-1. **User Query** → Agent selects MCP tools → Raw JSON from servers → Natural language response
-
-**Structured Output Response:**
-1. **User Query** → Agent selects MCP tools → Raw JSON from servers → Text response → Structured parser → Typed Pydantic models
-
-### Key Benefits
-
-- **Simplicity**: Raw JSON flows through the system without complex mapping
-- **Flexibility**: LLM can extract any data from Open-Meteo responses  
-- **Type Safety**: Structured output available when needed for applications
-- **Backwards Compatible**: Existing text-based usage continues to work
-- **Performance**: Direct JSON parsing is faster than complex validation
 
 ## Usage Examples
 
-### Traditional Text Response (Compatible with Stage 4)
+### Basic Weather Query
 ```python
 from weather_agent.mcp_agent import MCPWeatherAgent
 
 agent = MCPWeatherAgent()
 await agent.initialize()
 
-# Natural language response
-response = await agent.query("What's the weather forecast for Iowa?")
-print(response)  # Returns detailed text description
+# Query with location name
+response = await agent.query("What's the weather forecast for Tokyo?")
+print(response)
+
+# Query with coordinates
+response = await agent.query("What's the weather at latitude 35.6762, longitude 139.6503?")
+print(response)
 ```
 
-### Structured Output with Logging (New in Stage 5)
+### Multi-Turn Conversation
 ```python
-# Using the chatbot with structured output enabled
-from weather_agent.chatbot import SimpleWeatherChatbot
+# First query
+response1 = await agent.query("What's the weather in Cairo?", thread_id="egypt-weather")
 
-chatbot = SimpleWeatherChatbot()
-await chatbot.initialize()
-
-# This will show:
-# 1. Tool calls made (e.g., get_weather_forecast with location="Iowa")
-# 2. Raw JSON responses from MCP servers
-# 3. Structured output transformation
-# 4. Final Pydantic model with typed fields
-response = await chatbot.chat(
-    "What's the weather forecast for Iowa?",
-    show_structured=True
-)
+# Follow-up query (context preserved)
+response2 = await agent.query("How about the agricultural conditions?", thread_id="egypt-weather")
 ```
 
-### Programmatic Structured Output
-```python
-# Direct structured output without logging
-structured_response = await agent.query_structured(
-    "What's the weather forecast for Iowa?", 
-    response_format="forecast"
-)
+## Troubleshooting
 
-# Returns OpenMeteoResponse with typed fields
-print(f"Location: {structured_response.location}")
-print(f"Current temp: {structured_response.current_conditions.temperature}°C")
-print(f"Forecast days: {len(structured_response.daily_forecast)}")
+### Common Issues
 
-# Agricultural assessment
-ag_response = await agent.query_structured(
-    "Are conditions good for planting corn?",
-    response_format="agriculture"
-)
+1. **"Connection refused" errors**
+   - Ensure MCP servers are running: `./start_servers.sh`
+   - Check if servers are on correct ports: `ps aux | grep server.py`
 
-# Returns AgricultureAssessment with recommendations
-print(f"Planting conditions: {ag_response.planting_conditions}")
-for rec in ag_response.recommendations:
-    print(f"- {rec}")
-```
+2. **"All connection attempts failed" during cleanup**
+   - This is a known issue that doesn't affect functionality
+   - The agent operates normally despite cleanup warnings
 
-### Multi-Turn Conversations with Memory
-```python
-# Use thread IDs for conversation tracking
-thread_id = "farm-planning-session"
+3. **Tests timing out**
+   - Some tests make multiple API calls and may take time
+   - The test timeout is set to 120 seconds
 
-response1 = await agent.query(
-    "What's the weather forecast for Iowa?", 
-    thread_id=thread_id
-)
+### Debugging
 
-# Follow-up query with preserved context
-response2 = await agent.query(
-    "What about the soil conditions there?",  # "there" = Iowa
-    thread_id=thread_id
-)
-```
+- Server logs are stored in `logs/` directory
+- Check individual server logs: `tail -f logs/forecast_server.log`
+- Test direct server connection: `python tests/test_mcp_simple.py`
 
-## Testing
+## Benefits of Stage 6 Architecture
 
-### Comprehensive Test Suites
+1. **Production Ready**: HTTP servers can be deployed to cloud platforms
+2. **Independent Scaling**: Each server can scale based on its load
+3. **Better Monitoring**: Standard HTTP metrics and logging
+4. **Language Agnostic**: Any HTTP client can interact with servers
+5. **Simplified Deployment**: No subprocess management needed
+6. **Enhanced Performance**: Coordinate handling reduces API calls
 
-**MCP Server Tests:**
-```bash
-# Test all server functionality
-python mcp_servers/tests/test_mcp_servers.py
+## Next Steps
 
-# Covers:
-# - Basic JSON response validation
-# - Structured input validation  
-# - Error handling scenarios
-# - Data quality and completeness
-# - All server types (forecast, historical, agricultural)
-```
-
-**Agent Tests:**
-```bash
-# Test agent functionality  
-python weather_agent/tests/test_mcp_agent.py
-
-# Covers:
-# - Agent initialization and setup
-# - Basic query processing
-# - Structured output (LangGraph Option 1)
-# - Multi-turn conversation memory
-# - Tool integration
-# - Error handling
-```
-
-**Structured Output Demo:**
-```bash
-# Interactive structured output demonstration
-python weather_agent/tests/test_structured_output_demo.py
-
-# Demonstrates:
-# - Weather forecasts with typed fields
-# - Agricultural assessments with recommendations  
-# - Comparison between text and structured outputs
-# - JSON serialization and validation
-```
-
-## Structured Output Models
-
-### Agent Response Models (in `mcp_agent.py`)
-
-**OpenMeteoResponse**: Consolidated weather forecast data
-- `location`: String location name
-- `coordinates`: Optional lat/lon dictionary  
-- `timezone`: Optional timezone string
-- `current_conditions`: Optional WeatherCondition object
-- `daily_forecast`: Optional list of DailyForecast objects
-- `summary`: Natural language description
-- `data_source`: Data source attribution
-
-**AgricultureAssessment**: Farming-specific analysis
-- `location`: String location name
-- `soil_temperature`: Optional soil temperature in Celsius
-- `soil_moisture`: Optional soil moisture content
-- `evapotranspiration`: Optional daily ET in mm
-- `planting_conditions`: Assessment string ("FAVORABLE", "MARGINAL", etc.)
-- `recommendations`: List of farming recommendations
-- `summary`: Natural language agricultural summary
-
-### Supporting Models (`models/` directory)
-
-Note: The models in this directory are included for future extensibility but are not actively used in the current implementation. The structured output models (OpenMeteoResponse and AgricultureAssessment) are defined directly in `mcp_agent.py` for simplicity, following LangGraph's Option 1 approach.  
-- `responses.py`: Tool response formats
-- `metadata.py`: Data quality metrics
-
-## Command Reference
-
-### Complete Setup & Quick Start
-```bash
-# Prerequisites: Python 3.12.10 and ANTHROPIC_API_KEY already configured
-
-# Install dependencies (if not already done)
-pip install -r requirements.txt
-
-# Quick demos
-python main.py --demo                    # Original demo (Stage 4 compatible)
-python main.py --demo --structured       # Demo with tool calls & structured output
-
-# Interactive modes
-python main.py                           # Interactive chat
-python main.py --structured              # Interactive with structured output enabled
-# Type 'structured' during chat to toggle on/off
-
-# Testing
-python weather_agent/tests/test_structured_output_demo.py  # Structured output examples
-python mcp_servers/tests/test_mcp_servers.py              # Server tests
-python weather_agent/tests/test_mcp_agent.py              # Agent tests
-```
-
-## Known Behaviors
-
-### 1. MCP Server Startup Messages
-When running demos, you may see "Starting OpenMeteo X MCP Server..." messages multiple times:
-- Once during initial agent setup
-- Again when tools are actually invoked
-
-**This is normal behavior** from the `langchain-mcp-adapters` library (v0.1.7), which prints these informational messages when establishing or re-establishing server connections. The servers are not actually restarting - this is just the adapter managing connections.
-
-### 2. Intelligent Conversation Memory
-In demo mode with multiple queries, the agent may query locations from previous questions:
-
-**Example**: 
-- Query 1: "What's the weather forecast for Ames, Iowa?"
-- Query 2: "Are conditions good for planting corn in Grand Island, Nebraska?"
-- Result: The agent queries both Ames AND Grand Island for the second question
-
-**This is intelligent conversational behavior** - the agent remembers context from previous queries and may provide comparative analysis. This is a feature of LangGraph's conversation memory (MemorySaver) that maintains context across queries.
-
-**When this behavior is desired**: Interactive conversations where follow-up questions build on previous context
-**When this behavior is not desired**: Independent demo queries that should be isolated
-
-To run queries independently without memory:
-```python
-# Clear history between queries
-agent.clear_history()
-
-# Or use unique thread IDs
-response = await agent.query(question, thread_id="unique-id")
-```
-
-## Summary: LangGraph Option 1 Implementation
-
-Stage 5 successfully implements **LangGraph Option 1** structured output approach:
-
-**✅ Benefits Achieved:**
-- **Simplicity**: Raw JSON flows through MCP servers (70% less complexity than structured server approach)
-- **Flexibility**: LLM can extract any Open-Meteo field as needed
-- **Type Safety**: Structured Pydantic models available when applications need them
-- **Backwards Compatibility**: All Stage 4 functionality preserved
-- **Clean Architecture**: Clear separation between data retrieval and structuring
-- **Intelligent Context**: Conversation memory enables smart follow-up queries
-
-**🔧 Implementation Highlights:**
-- MCP servers return consolidated Open-Meteo JSON responses
-- Agent provides both `query()` (text) and `query_structured()` (typed) methods
-- Conversation memory preserved through LangGraph checkpointer
-- Comprehensive test suites ensure reliability
-- No breaking changes to existing Stage 4 usage
-
-This approach provides the best of both worlds: the simplicity and flexibility of raw JSON processing with the type safety and structure needed for application integration.
-
----
-
-## Stage 6: FastMCP HTTP Architecture (Upgrade from Stage 5)
-
-### What Changed from Stage 5 (Advanced MCP with Stdio) to Stage 6 (FastMCP HTTP)?
-
-**Stage 6 is a major architectural upgrade that replaces all stdio-based MCP servers with modern FastMCP HTTP servers.**
-
-#### Key Upgrades:
-
-- **All MCP servers (forecast, historical, agricultural) now use FastMCP and run as HTTP servers.**
-- **No more subprocess or stdio communication.** The agent talks to each server via HTTP using the FastMCP Python client.
-- **Each server exposes its tool(s) using FastMCP's @app.tool() decorator and stateless HTTP mode.**
-- **The agent is now configured with three HTTP endpoints:**
-  - `forecast_server.py` (default: http://127.0.0.1:8000)
-  - `historical_server.py` (default: http://127.0.0.1:8001)
-  - `agricultural_server.py` (default: http://127.0.0.1:8002)
-- **All tool calls are now HTTP requests, not process pipes.**
-- **The chatbot and agent are updated to use only HTTP tools.**
-- **No more MultiServerMCPClient or stdio config.**
-- **Cleaner, more scalable, and production-ready architecture.**
-
-#### FastMCP Usage Pattern
-
-- Each server is a FastMCP app with one or more @app.tool() endpoints.
-- Servers are started independently (each on its own port).
-- The agent uses the FastMCP Python client to call tools on each server by name.
-- All tool calls are async HTTP requests, making the system scalable and cloud-ready.
-
-#### Example: Starting All Servers
-
-```bash
-# In three separate terminals (or use a process manager)
-python mcp_servers/forecast_server.py --port 8000
-python mcp_servers/historical_server.py --port 8001
-python mcp_servers/agricultural_server.py --port 8002
-```
-
-#### Example: Agent Initialization
-
-```python
-from weather_agent.mcp_agent import MCPWeatherAgent
-agent = MCPWeatherAgent(
-    forecast_server_url="http://127.0.0.1:8000",
-    historical_server_url="http://127.0.0.1:8001",
-    agricultural_server_url="http://127.0.0.1:8002"
-)
-await agent.initialize()
-```
-
-#### Why FastMCP HTTP?
-- **Stateless, scalable, and cloud-native**
-- **No process management headaches**
-- **Easy to deploy each server independently**
-- **Standardized tool interface for LLMs and agents**
-- **Cleaner code and easier debugging**
+- Consider implementing coordinate caching for frequently queried locations
+- Add health check endpoints to servers
+- Implement rate limiting for production use
+- Consider containerizing servers for easier deployment

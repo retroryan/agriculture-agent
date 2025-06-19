@@ -89,16 +89,16 @@ class MCPWeatherAgent:
     5. LangGraph's create_react_agent handles execution for all tools.
     """
     
-    def __init__(self, forecast_server_url="http://127.0.0.1:8000", historical_server_url="http://127.0.0.1:8001", agricultural_server_url="http://127.0.0.1:8002"):
+    def __init__(self, forecast_server_url="http://127.0.0.1:8000/mcp", historical_server_url="http://127.0.0.1:8001/mcp", agricultural_server_url="http://127.0.0.1:8002/mcp"):
         # Create LLM instance
         self.llm = ChatAnthropic(
             model="claude-3-5-sonnet-20240620",
             temperature=0
         )
-        # Initialize FastMCP HTTP clients for each server
-        self.forecast_client = Client(forecast_server_url)
-        self.historical_client = Client(historical_server_url)
-        self.agricultural_client = Client(agricultural_server_url)
+        # Store server URLs for creating clients in each tool call
+        self.forecast_server_url = forecast_server_url
+        self.historical_server_url = historical_server_url
+        self.agricultural_server_url = agricultural_server_url
         self.tools = []
         self.agent = None
         
@@ -129,45 +129,117 @@ Tool Usage Guidelines:
 - For complex queries → use multiple tools to gather comprehensive data.
 
 Location context may be provided in [brackets] to help with disambiguation.
-Always prefer calling tools with this context over asking for clarification."""
+Always prefer calling tools with this context over asking for clarification.
+
+COORDINATE HANDLING:
+- When users mention coordinates (lat/lon, latitude/longitude), ALWAYS pass them to tools
+- For faster responses, provide latitude/longitude coordinates for any location you know
+- You have extensive geographic knowledge - use it to provide coordinates for cities worldwide
+- If you're unsure of exact coordinates, let the tools handle geocoding instead"""
         )
         
     async def initialize(self):
         """Initialize MCP HTTP clients and create the LangGraph agent."""
+        # Note: FastMCP clients will be created fresh in each tool call
+        
         # 1. Create tool for the HTTP-based forecast server
         @create_langchain_tool
-        async def get_weather_forecast(location: str, days: int = 7) -> Dict[str, Any]:
-            """Get weather forecast data from the Open-Meteo API via FastMCP HTTP server."""
+        async def get_weather_forecast(location: str, days: int = 7, latitude: Optional[float] = None, longitude: Optional[float] = None) -> Dict[str, Any]:
+            """Get weather forecast data from the Open-Meteo API via FastMCP HTTP server.
+            
+            Args:
+                location: Location name (e.g., 'Des Moines, Iowa')
+                days: Number of forecast days (1-16)
+                latitude: Latitude (optional, overrides location if provided)
+                longitude: Longitude (optional, overrides location if provided)
+            """
             try:
-                response = await self.forecast_client.call_tool(
-                    "get_weather_forecast",
-                    {"location": location, "days": days}
-                )
-                return response
+                args = {"location": location, "days": days}
+                if latitude is not None and longitude is not None:
+                    args["latitude"] = latitude
+                    args["longitude"] = longitude
+                    
+                # Create a new client for this tool call
+                client = Client(self.forecast_server_url)
+                async with client:
+                    response = await client.call_tool(
+                        "get_weather_forecast",
+                        args
+                    )
+                    # FastMCP returns a list of TextContent objects
+                    if isinstance(response, list) and len(response) > 0:
+                        content = response[0]
+                        if hasattr(content, 'text'):
+                            return json.loads(content.text)
+                    return response
             except Exception as e:
+                print(f"DEBUG: Forecast tool error: {type(e).__name__}: {e}")
+                import traceback
+                traceback.print_exc()
                 return {"error": f"Failed to call forecast server: {str(e)}"}
 
         @create_langchain_tool
-        async def get_historical_weather(location: str, start_date: str, end_date: str) -> Dict[str, Any]:
-            """Get historical weather data from the Open-Meteo API via FastMCP HTTP server."""
+        async def get_historical_weather(location: str, start_date: str, end_date: str, latitude: Optional[float] = None, longitude: Optional[float] = None) -> Dict[str, Any]:
+            """Get historical weather data from the Open-Meteo API via FastMCP HTTP server.
+            
+            Args:
+                location: Location name (e.g., 'Des Moines, Iowa')
+                start_date: Start date in YYYY-MM-DD format
+                end_date: End date in YYYY-MM-DD format
+                latitude: Latitude (optional, overrides location if provided)
+                longitude: Longitude (optional, overrides location if provided)
+            """
             try:
-                response = await self.historical_client.call_tool(
-                    "get_historical_weather",
-                    {"location": location, "start_date": start_date, "end_date": end_date}
-                )
-                return response
+                args = {"location": location, "start_date": start_date, "end_date": end_date}
+                if latitude is not None and longitude is not None:
+                    args["latitude"] = latitude
+                    args["longitude"] = longitude
+                    
+                # Create a new client for this tool call
+                client = Client(self.historical_server_url)
+                async with client:
+                    response = await client.call_tool(
+                        "get_historical_weather",
+                        args
+                    )
+                    # FastMCP returns a list of TextContent objects
+                    if isinstance(response, list) and len(response) > 0:
+                        content = response[0]
+                        if hasattr(content, 'text'):
+                            return json.loads(content.text)
+                    return response
             except Exception as e:
                 return {"error": f"Failed to call historical server: {str(e)}"}
 
         @create_langchain_tool
-        async def get_agricultural_conditions(location: str, days: int = 7) -> Dict[str, Any]:
-            """Get agricultural weather conditions from the Open-Meteo API via FastMCP HTTP server."""
+        async def get_agricultural_conditions(location: str, days: int = 7, latitude: Optional[float] = None, longitude: Optional[float] = None) -> Dict[str, Any]:
+            """Get agricultural weather conditions from the Open-Meteo API via FastMCP HTTP server.
+            
+            Args:
+                location: Location name (e.g., 'Des Moines, Iowa')
+                days: Number of forecast days (1-7)
+                latitude: Latitude (optional, overrides location if provided)
+                longitude: Longitude (optional, overrides location if provided)
+            """
             try:
-                response = await self.agricultural_client.call_tool(
-                    "get_agricultural_conditions",
-                    {"location": location, "days": days}
-                )
-                return response
+                args = {"location": location, "days": days}
+                if latitude is not None and longitude is not None:
+                    args["latitude"] = latitude
+                    args["longitude"] = longitude
+                    
+                # Create a new client for this tool call
+                client = Client(self.agricultural_server_url)
+                async with client:
+                    response = await client.call_tool(
+                        "get_agricultural_conditions",
+                        args
+                    )
+                    # FastMCP returns a list of TextContent objects
+                    if isinstance(response, list) and len(response) > 0:
+                        content = response[0]
+                        if hasattr(content, 'text'):
+                            return json.loads(content.text)
+                    return response
             except Exception as e:
                 return {"error": f"Failed to call agricultural server: {str(e)}"}
 
@@ -342,18 +414,17 @@ Always prefer calling tools with this context over asking for clarification."""
     
     async def cleanup(self):
         """Clean up MCP connections."""
-        # The MultiServerMCPClient handles subprocess cleanup for stdio servers
-        if self.mcp_client_stdio:
-            # This is often handled in the destructor, but explicit cleanup is good practice
-            pass
-        # For the HTTP client, there's usually no persistent connection to clean up
-        # unless you were using a session object that needs closing.
+        # No persistent connections to clean up - each tool call manages its own
         print("MCP agent cleanup complete.")
 
 
 # Convenience function
-async def create_mcp_weather_agent(forecast_server_url="http://127.0.0.1:8000"):
+async def create_mcp_weather_agent(forecast_server_url="http://127.0.0.1:8000", historical_server_url="http://127.0.0.1:8001", agricultural_server_url="http://127.0.0.1:8002"):
     """Create and initialize an MCP weather agent."""
-    agent = MCPWeatherAgent(forecast_server_url=forecast_server_url)
+    agent = MCPWeatherAgent(
+        forecast_server_url=forecast_server_url,
+        historical_server_url=historical_server_url,
+        agricultural_server_url=agricultural_server_url
+    )
     await agent.initialize()
     return agent
