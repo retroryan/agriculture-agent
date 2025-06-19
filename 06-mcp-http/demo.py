@@ -63,54 +63,18 @@ async def run_full_agent_demo():
     await agent.cleanup()
 
 
-async def run_minimal_example():
-    """Run a minimal example showing direct tool usage."""
-    print("\n🔧 Minimal FastMCP Tool Usage Example")
-    print("-" * 40)
-    
-    from langgraph_agent import FastMCPTool
-    
-    # Create tool wrapper
-    mcp_tools = FastMCPTool()
-    
-    try:
-        # List available tools
-        print("Available tools:")
-        tools = await mcp_tools.list_tools()
-        for tool in tools:
-            print(f"  - {tool.name if hasattr(tool, 'name') else tool}")
-        
-        # Call a tool directly
-        print("\nCalling get_example_data:")
-        result = await mcp_tools.call_tool("get_example_data", {})
-        print(result)
-        
-        print("\nCalling calculate_comfort_index(22, 50):")
-        result = await mcp_tools.call_tool("calculate_comfort_index", {
-            "temperature": 22,
-            "humidity": 50
-        })
-        print(result)
-        
-    finally:
-        await mcp_tools.close()
-
-
 async def main():
     """Main demo entry point."""
     print("FastMCP + LangGraph Demo")
     print("\nChoose demo mode:")
     print("1. Full agent demo (conversational)")
-    print("2. Minimal tool usage example")
-    print("3. Interactive chat mode")
+    print("2. Interactive chat mode")
     
-    choice = input("\nEnter choice (1-3): ").strip()
+    choice = input("\nEnter choice (1-2): ").strip()
     
     if choice == "1":
         await run_full_agent_demo()
     elif choice == "2":
-        await run_minimal_example()
-    elif choice == "3":
         agent = SimpleFastMCPAgent()
         await agent.run_interactive()
     else:
