@@ -36,6 +36,14 @@ async def main():
                             "type": "string",
                             "description": "Location name (e.g., 'Des Moines, Iowa')"
                         },
+                        "latitude": {
+                            "type": "number",
+                            "description": "Latitude (optional, overrides location if provided)"
+                        },
+                        "longitude": {
+                            "type": "number",
+                            "description": "Longitude (optional, overrides location if provided)"
+                        },
                         "start_date": {
                             "type": "string",
                             "description": "Start date (YYYY-MM-DD)"
@@ -45,7 +53,7 @@ async def main():
                             "description": "End date (YYYY-MM-DD)"
                         }
                     },
-                    "required": ["location", "start_date", "end_date"]
+                    "required": ["start_date", "end_date"]
                 }
             }
         ]
@@ -57,9 +65,11 @@ async def main():
         
         try:
             location = arguments.get("location", "")
+            lat = arguments.get("latitude")
+            lon = arguments.get("longitude")
             start_date = arguments.get("start_date", "")
             end_date = arguments.get("end_date", "")
-            
+
             # Parse dates
             try:
                 start = datetime.strptime(start_date, "%Y-%m-%d").date()
@@ -69,30 +79,29 @@ async def main():
                     "type": "text",
                     "text": "Invalid date format. Use YYYY-MM-DD."
                 }]
-            
-            # Validate date range
             if end < start:
                 return [{
                     "type": "text",
                     "text": "End date must be after start date."
                 }]
-            
-            # Check if dates are old enough for historical API
             min_date = date.today() - timedelta(days=5)
             if end > min_date:
                 return [{
                     "type": "text",
                     "text": f"Historical data only available before {min_date}. Use forecast API for recent dates."
                 }]
-            
-            # Get coordinates
-            coords = await get_coordinates(location)
-            if not coords:
-                return [{
-                    "type": "text",
-                    "text": f"Could not find location: {location}. Please try a major city name."
-                }]
-            
+
+            # Phase 2: Use coordinates if provided, else geocode
+            if lat is not None and lon is not None:
+                coords = {"latitude": lat, "longitude": lon, "name": location or f"{lat},{lon}"}
+            else:
+                coords = await get_coordinates(location)
+                if not coords:
+                    return [{
+                        "type": "text",
+                        "text": f"Could not find location: {location}. Please try a major city name."
+                    }]
+
             # Get historical data
             params = {
                 "latitude": coords["latitude"],
@@ -102,10 +111,7 @@ async def main():
                 "daily": ",".join(get_daily_params()),
                 "timezone": "auto"
             }
-            
             data = await client.get("archive", params)
-            
-            # Add location info
             data["location_info"] = {
                 "name": coords.get("name", location),
                 "coordinates": {
@@ -113,18 +119,13 @@ async def main():
                     "longitude": coords["longitude"]
                 }
             }
-            
-            # Create summary
             summary = f"Historical weather for {coords.get('name', location)}\n"
             summary += f"Period: {start_date} to {end_date}\n"
             summary += f"Timezone: {data.get('timezone', 'Unknown')}\n\n"
-            
-            # Return raw JSON
             return [{
                 "type": "text",
                 "text": summary + json.dumps(data, indent=2)
             }]
-            
         except Exception as e:
             return [{
                 "type": "text",

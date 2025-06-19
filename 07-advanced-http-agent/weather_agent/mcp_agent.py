@@ -3,7 +3,7 @@ MCP Weather Agent using LangGraph with Structured Output
 
 This module demonstrates how to use MCP servers with LangGraph:
 - Uses create_react_agent for robust tool handling
-- MCP servers run as stdio subprocesses
+- MCP servers run as independent HTTP endpoints
 - Automatic tool discovery and execution
 - Claude's native tool calling works through LangChain
 - Implements structured output using LangGraph Option 1 approach in this document https://langchain-ai.github.io/langgraph/how-tos/react-agent-structured-output/
@@ -81,7 +81,7 @@ class MCPWeatherAgent:
     A weather agent that uses MCP servers with LangGraph.
     
     This demonstrates the correct approach:
-    1. MCP servers run as stdio subprocesses
+    1. MCP servers run as independent HTTP endpoints
     2. Tools are discovered dynamically
     3. LangGraph's create_react_agent handles tool execution
     4. Claude's native tool calling works automatically
@@ -137,28 +137,19 @@ class MCPWeatherAgent:
         
     async def initialize(self):
         """Initialize MCP connections and create the LangGraph agent."""
-        # Get path to MCP servers
-        mcp_path = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)),
-            "mcp_servers"
-        )
-        
-        # Configure MCP servers
+        # Configure MCP servers with HTTP endpoints
         server_config = {
             "forecast": {
-                "command": "python",
-                "args": [os.path.join(mcp_path, "forecast_server.py")],
-                "transport": "stdio"
+                "url": "http://127.0.0.1:7071/mcp",
+                "transport": "streamable_http"
             },
             "historical": {
-                "command": "python",
-                "args": [os.path.join(mcp_path, "historical_server.py")],
-                "transport": "stdio"
+                "url": "http://127.0.0.1:7072/mcp",
+                "transport": "streamable_http"
             },
             "agricultural": {
-                "command": "python", 
-                "args": [os.path.join(mcp_path, "agricultural_server.py")],
-                "transport": "stdio"
+                "url": "http://127.0.0.1:7073/mcp",
+                "transport": "streamable_http"
             }
         }
         
@@ -341,8 +332,8 @@ class MCPWeatherAgent:
         print(f"🆕 Started new conversation: {self.conversation_id}")
     
     async def cleanup(self):
-        """Clean up MCP connections (subprocesses are terminated automatically)."""
-        # The MultiServerMCPClient handles subprocess cleanup
+        """Clean up MCP connections (HTTP connections are closed automatically)."""
+        # The MultiServerMCPClient handles HTTP connection cleanup
         pass
 
 

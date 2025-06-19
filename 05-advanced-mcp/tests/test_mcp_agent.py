@@ -20,15 +20,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
-# Add the parent directories to the path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add parent directory to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from weather_agent.mcp_agent import MCPWeatherAgent, OpenMeteoResponse, AgricultureAssessment
 
 
 # Test utilities
-class TestResults:
+class TestResultsTracker:
     """Track test results and provide summary."""
     
     def __init__(self):
@@ -68,7 +67,7 @@ class TestResults:
 
 
 # Global test results
-results = TestResults()
+results = TestResultsTracker()
 
 
 async def test_agent_initialization():
