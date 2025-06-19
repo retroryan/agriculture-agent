@@ -1,242 +1,237 @@
-# Stage 6: FastMCP HTTP Architecture with Coordinate Handling
+# FastMCP + LangGraph Integration Tutorial
 
-## Overview
+## Brief Overview
 
-Stage 6 represents a **major architectural upgrade** from Stage 5's stdio-based MCP servers to modern HTTP-based FastMCP servers. This transformation provides:
-
-1. **HTTP Architecture**: Replaces stdio/subprocess communication with clean HTTP APIs
-2. **FastMCP Integration**: All servers now use FastMCP's `@app.tool()` decorator pattern
-3. **Coordinate Handling**: New feature allowing LLM to provide coordinates directly for well-known locations
-4. **Process Isolation**: Each server runs as an independent HTTP service on its own port
-5. **Better Scalability**: HTTP servers can be deployed and scaled independently
-
-### Key Architectural Changes from Stage 5
-
-| Feature | Stage 5 (stdio) | Stage 6 (HTTP) |
-|---------|----------------|----------------|
-| Communication | stdio pipes via subprocess | HTTP requests |
-| Server Framework | `mcp.server.stdio` | `fastmcp` with HTTP |
-| Tool Definition | `@app.list_tools()` | `@app.tool()` decorator |
-| Process Model | Subprocess management | Independent HTTP servers |
-| Client | `MultiServerMCPClient` | FastMCP HTTP clients |
-| Ports | N/A (stdio) | 8000, 8001, 8002 |
+This step was an entirely new sample to learn how to work with LangGraph and LangGraph MCP Integration and shows how to build FastMCP Servers and call them from LangGraph with the LangGraph Adapter. Unlike stages 02-05 which progressively built the weather demo, this stage explores the critical integration patterns needed to properly connect MCP servers with LangGraph agents.
 
 ## Quick Start
 
-### Prerequisites
-- Python 3.12.10 (via pyenv)
-- ANTHROPIC_API_KEY environment variable set
-- `.env` file with your API key
-
-### Installation
-```bash
-# Set Python version
-pyenv local 3.12.10
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Create .env file
-echo "ANTHROPIC_API_KEY=your-key-here" > .env
-```
-
-### Running the Application
-
-#### 1. Start MCP Servers
-```bash
-# Start all three MCP servers (runs in background)
-./start_servers.sh
-
-# Servers will run on:
-# - Forecast server: http://127.0.0.1:8000
-# - Historical server: http://127.0.0.1:8001
-# - Agricultural server: http://127.0.0.1:8002
-```
-
-#### 2. Stop MCP Servers
-```bash
-# Stop all MCP servers
-./stop_servers.sh
-
-# Stop servers and clean up logs
-./stop_servers.sh --clean-logs
-```
-
-#### 3. Run the Weather Agent
-```bash
-# Interactive mode
-python main.py
-
-# Demo mode (runs predefined scenarios)
-python main.py --demo
-
-# Multi-turn conversation demo
-python main.py --multi-turn-demo
-
-# Query mode
-python main.py --query "What's the weather in Tokyo?"
-```
-
-### Running Tests
+Assumes you already have Python 3.12.10 and `.env` file with your Anthropic API key configured.
 
 ```bash
-# Start servers first (if not already running)
-./start_servers.sh
+# Terminal 1: Start the FastMCP server
+python serializer.py
 
-# Run all tests
-python tests/run_all_tests.py
-
-# Run individual tests (from project root)
-python tests/test_mcp_simple.py        # Core MCP functionality
-python tests/test_agent_simple.py      # Basic agent integration
-python tests/test_coordinates.py       # Coordinate handling
-python tests/test_diverse_cities.py    # Geographic knowledge
-python tests/test_error_handling.py    # Error scenarios
+# Terminal 2: Run the unified demo
+python demo.py
 ```
 
-## Key Features
+The demo provides three modes:
+1. Full agent demo with example queries
+2. Minimal tool usage example  
+3. Interactive chat mode
 
-### 1. Coordinate Handling
-All MCP servers now accept optional `latitude` and `longitude` parameters:
-- When coordinates are provided, they're used directly (bypassing geocoding)
-- When only location is provided, geocoding is performed
-- The LLM is encouraged to provide coordinates for well-known locations
+## Architecture Overview
 
-### 2. FastMCP HTTP Architecture
-- Each server runs as an independent HTTP service
-- Clean RESTful API endpoints using FastMCP's `@app.tool()` decorator
-- No subprocess management or stdio communication
-- Async HTTP requests for better performance
+### Core Components
 
-### 3. Server Management
-- Simple shell scripts for starting/stopping servers
-- Automatic log management
-- Process isolation for stability
-
-## Architecture Details
-
-### Server Endpoints
-- **Forecast Server** (port 8000): Current and future weather (up to 16 days)
-- **Historical Server** (port 8001): Past weather data (5+ days old)
-- **Agricultural Server** (port 8002): Soil moisture, evapotranspiration, growing conditions
-
-### Coordinate Handling Flow
-```
-User Query → LLM → Extract Location/Coordinates → MCP Server
-                                                      ↓
-                                          Coordinates provided?
-                                               ↙         ↘
-                                            Yes           No
-                                             ↓            ↓
-                                      Use directly    Geocode location
-                                             ↘         ↙
-                                           Fetch weather data
-```
-
-### FastMCP Server Pattern
+**FastMCP Server** (`serializer.py`):
 ```python
-from fastmcp import FastMCP
+# Creates HTTP server with custom YAML serialization
+server = Server("fastmcp-demo-server", custom_serializer=custom_dict_serializer)
 
-app = FastMCP("weather-forecast", dependencies=["httpx"])
-
-@app.tool()
-async def get_weather_forecast(
-    location: str,
-    latitude: Optional[float] = None,
-    longitude: Optional[float] = None,
-    days: int = 7
-) -> Dict[str, Any]:
-    """Get weather forecast with optional coordinate override."""
-    # Implementation here
+@server.tool
+def get_example_data() -> dict:
+    """Fetch example data from the weather station."""
+    return {
+        "name": "Downtown Weather Station",
+        "temperature": 22.5,
+        "humidity": 65,
+        "conditions": "Partly Cloudy",
+        "timestamp": datetime.now().isoformat()
+    }
 ```
+Runs on `http://127.0.0.1:7070/mcp` with streamable HTTP transport.
 
-## Project Structure
-```
-06-mcp-http/
-├── mcp_servers/              # FastMCP HTTP servers
-│   ├── forecast_server.py    # Weather forecast server
-│   ├── historical_server.py  # Historical weather server
-│   ├── agricultural_server.py # Agricultural conditions server
-│   └── api_utils.py          # Shared Open-Meteo client
-├── weather_agent/            # LangGraph agent implementation
-│   ├── mcp_agent.py         # Core agent with MCP integration
-│   ├── chatbot.py           # Interactive CLI interface
-│   └── demo_scenarios.py    # Predefined test scenarios
-├── tests/                   # Test suite
-│   ├── test_mcp_simple.py   # Core MCP functionality
-│   ├── test_agent_simple.py # Agent integration
-│   ├── test_coordinates.py  # Coordinate handling
-│   ├── test_diverse_cities.py # Geographic knowledge
-│   ├── test_error_handling.py # Error scenarios
-│   └── run_all_tests.py     # Test runner
-├── logs/                    # Server logs (created at runtime)
-├── start_servers.sh         # Start all MCP servers
-├── stop_servers.sh          # Stop all MCP servers
-├── main.py                  # Main entry point
-└── requirements.txt         # Python dependencies
-```
-
-## Usage Examples
-
-### Basic Weather Query
+**LangGraph Agent** (`langgraph_agent.py`):
 ```python
-from weather_agent.mcp_agent import MCPWeatherAgent
+from langchain_mcp_adapters.client import MultiServerMCPClient
+from langgraph.prebuilt import create_react_agent
 
-agent = MCPWeatherAgent()
-await agent.initialize()
-
-# Query with location name
-response = await agent.query("What's the weather forecast for Tokyo?")
-print(response)
-
-# Query with coordinates
-response = await agent.query("What's the weather at latitude 35.6762, longitude 139.6503?")
-print(response)
+# The critical pattern - using official MCP adapters
+self.mcp_client = MultiServerMCPClient({
+    "fastmcp": {
+        "url": "http://127.0.0.1:7070/mcp",
+        "transport": "streamable_http"
+    }
+})
+tools = await self.mcp_client.get_tools()
+self.agent = create_react_agent(self.llm, tools)
 ```
 
-### Multi-Turn Conversation
+**Simple Alternative** (`simple_client.py`):
+For cases where LangGraph complexity isn't needed, demonstrates direct Claude + MCP integration with manual tool wrapping.
+
+### Communication Flow
+```
+User Query → LangGraph Agent
+    ├── Parse with Claude AI
+    ├── Discover tools via MultiServerMCPClient
+    ├── Execute tools through MCP protocol
+    │   └── HTTP Request → FastMCP Server → YAML Response
+    ├── Process results
+    └── Generate natural language response
+```
+
+## Best Practices for Working with LangGraph and MCP Integration
+
+### 1. Use Official Adapters
+Always use `langchain-mcp-adapters` instead of manually wrapping MCP calls:
 ```python
-# First query
-response1 = await agent.query("What's the weather in Cairo?", thread_id="egypt-weather")
+# ✅ CORRECT - Use official adapters
+from langchain_mcp_adapters.client import MultiServerMCPClient
 
-# Follow-up query (context preserved)
-response2 = await agent.query("How about the agricultural conditions?", thread_id="egypt-weather")
+# ❌ WRONG - Manual tool wrapping
+@tool
+async def my_mcp_tool():
+    async with Client(...) as client:
+        return await client.call_tool(...)
 ```
 
-## Troubleshooting
+### 2. Let LangGraph Handle Message Flow
+Use pre-built components that manage Claude's strict message ordering:
+```python
+# ✅ CORRECT - Pre-built agent handles message flow
+agent = create_react_agent(llm, tools)
 
-### Common Issues
+# ❌ WRONG - Custom graph with manual state management
+workflow = StateGraph(AgentState)
+workflow.add_node("agent", agent_node)
+```
 
-1. **"Connection refused" errors**
-   - Ensure MCP servers are running: `./start_servers.sh`
-   - Check if servers are on correct ports: `ps aux | grep server.py`
+### 3. Proper Error Handling
+See `langgraph_agent.py:73-84` for connection validation:
+```python
+async def _test_connection(self):
+    """Test connection to MCP server"""
+    try:
+        await self.mcp_client.__aenter__()
+        await self.mcp_client.__aexit__(None, None, None)
+        return True
+    except Exception as e:
+        print(f"\n❌ Failed to connect to MCP server: {e}")
+        return False
+```
 
-2. **"All connection attempts failed" during cleanup**
-   - This is a known issue that doesn't affect functionality
-   - The agent operates normally despite cleanup warnings
+### 4. Clean Resource Management
+Always use context managers or proper cleanup (see `langgraph_agent.py:86-93`):
+```python
+async def __aexit__(self, exc_type, exc_val, exc_tb):
+    if self.mcp_client:
+        await self.mcp_client.__aexit__(exc_type, exc_val, exc_tb)
+```
 
-3. **Tests timing out**
-   - Some tests make multiple API calls and may take time
-   - The test timeout is set to 120 seconds
+### 5. Tool Discovery Pattern
+Let the framework discover tools dynamically rather than hardcoding (see `langgraph_agent.py:58-66`):
+```python
+tools = await self.mcp_client.get_tools()
+if not tools:
+    print("⚠️  No tools discovered from MCP server")
+```
 
-### Debugging
+## Links to Official Documentation
 
-- Server logs are stored in `logs/` directory
-- Check individual server logs: `tail -f logs/forecast_server.log`
-- Test direct server connection: `python tests/test_mcp_simple.py`
+- **Using MCP in LangGraph agents**: https://langchain-ai.github.io/langgraph/agents/mcp/
+- **LangGraph MCP server concepts**: https://langchain-ai.github.io/langgraph/concepts/server-mcp/
+- **Exposing agents as MCP tools**: https://langchain-ai.github.io/langgraph/concepts/server-mcp/#exposing-an-agent-as-mcp-tool
+- **FastMCP Documentation**: Check the FastMCP repository for server implementation details
 
-## Benefits of Stage 6 Architecture
+## The Real Problem Discovered and How To Properly Integrate with LangGraph
 
-1. **Production Ready**: HTTP servers can be deployed to cloud platforms
-2. **Independent Scaling**: Each server can scale based on its load
-3. **Better Monitoring**: Standard HTTP metrics and logging
-4. **Language Agnostic**: Any HTTP client can interact with servers
-5. **Simplified Deployment**: No subprocess management needed
-6. **Enhanced Performance**: Coordinate handling reduces API calls
+### What We Initially Tried (And Why It Failed)
 
-## Next Steps
+The first implementation attempt manually wrapped MCP calls as LangChain tools and built a custom StateGraph. This approach failed because:
 
-- Consider implementing coordinate caching for frequently queried locations
-- Add health check endpoints to servers
-- Implement rate limiting for production use
-- Consider containerizing servers for easier deployment
+1. **Manual Tool Wrapping Created Disconnect**: 
+   ```python
+   # ❌ WRONG - From initial broken attempt
+   @tool
+   async def get_example_data():
+       async with Client("http://127.0.0.1:7070/mcp") as client:
+           result = await client.call_tool("get_example_data", {})
+           return result[0].text
+   ```
+   This creates a layer between LangGraph and the actual MCP protocol, breaking tool management.
+
+2. **Custom Graph Construction Required Manual Message Flow**:
+   ```python
+   # ❌ WRONG - Manual state management
+   workflow = StateGraph(AgentState)
+   workflow.add_node("agent", agent_node)
+   workflow.add_node("tools", tool_node)
+   ```
+   This required managing message accumulation and ordering manually.
+
+3. **Message Ordering Violations**: Claude requires tool calls to immediately precede tool results. Manual management led to invalid sequences where ToolMessages appeared without corresponding AIMessage tool calls.
+
+### The Correct Solution
+
+As documented in `workflow.md:276-314`, the proper approach uses the official MCP adapters:
+
+```python
+# ✅ CORRECT - From langgraph_agent.py:48-52
+from langchain_mcp_adapters.client import MultiServerMCPClient
+
+self.mcp_client = MultiServerMCPClient({
+    "fastmcp": {
+        "url": "http://127.0.0.1:7070/mcp",
+        "transport": "streamable_http"
+    }
+})
+```
+
+This solution works because:
+- The adapter handles all protocol-level communication
+- Pre-built agents manage message flow correctly
+- Tool discovery happens automatically
+- Claude's message ordering requirements are respected
+
+## Key Differences and Why the Original Approach Broke
+
+### 1. Import Path Confusion
+The correct import was not obvious:
+```python
+# ✅ CORRECT - Note the specific module path
+from langchain_mcp_adapters.client import MultiServerMCPClient
+
+# ❌ WRONG - These imports don't exist
+from langchain_mcp_adapters import MultiServerMCPClient  # No!
+from langchain_mcp import MultiServerMCPClient  # Also no!
+```
+
+### 2. Protocol Layer Abstraction
+- **Original Approach**: Direct MCP client calls wrapped in tools → Manual message handling → State conflicts
+- **Correct Approach**: MCP Server → MCP Adapters → LangChain Tools → LangGraph Agent
+
+Each layer properly abstracts the complexity below it.
+
+### 3. Message Flow Management
+As shown in `simple_client.py:91-112`, even the simple approach requires careful message management:
+```python
+# Create fresh message list for each query to avoid context issues
+messages = [
+    SystemMessage(content="You are a helpful assistant..."),
+    HumanMessage(content=query)
+]
+```
+
+The LangGraph adapter handles this automatically, preventing the accumulation issues that broke the manual approach.
+
+### 4. Debugging Insights
+From `workflow.md:395-429`, the key lessons learned:
+- Start with the simplest implementation (`client_serializer.py`)
+- Verify each component independently
+- Use official examples as reference
+- Check for existing adapters before building custom integrations
+
+### 5. Why It Matters
+The journey from broken to working implementation demonstrates:
+- **Complexity of Protocol Integration**: MCP, LangChain, and Claude each have specific requirements
+- **Value of Official Libraries**: They encapsulate edge cases and best practices
+- **Importance of Documentation**: The solution was clearly documented but required careful reading
+
+## Summary
+
+This tutorial demonstrates the critical importance of using official integration libraries when building LangGraph + MCP applications. The `langchain-mcp-adapters` library exists specifically to handle the complex interaction between MCP servers and LangGraph agents, managing message flow, tool discovery, and protocol translation that would be error-prone to implement manually.
+
+The final implementation in `langgraph_agent.py` is not just simpler than manual attempts, but also more robust because it leverages the collective knowledge embedded in the official libraries. When building AI applications with multiple protocol layers, always check for official adapters before attempting custom integrations.

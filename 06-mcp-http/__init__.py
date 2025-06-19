@@ -1,1 +1,1 @@
-# 05-advanced-mcp package
+"""Simple FastMCP + LangGraph Integration Example"""
