@@ -12,18 +12,13 @@ import asyncio
 import os
 from typing import List
 from langgraph.prebuilt import create_react_agent
-from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
-# Load environment variables
-from pathlib import Path
-try:
-    from dotenv import load_dotenv
-    env_path = Path(__file__).parent.parent.parent / '.env'
-    load_dotenv(env_path)
-except ImportError:
-    pass
+# Import unified model configuration
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from config import get_model
 
 
 class MCPWeatherAgent:
@@ -38,11 +33,8 @@ class MCPWeatherAgent:
     """
     
     def __init__(self):
-        # Create LLM
-        self.llm = ChatAnthropic(
-            model="claude-3-5-sonnet-20241022",
-            temperature=0
-        )
+        # Create LLM using unified model interface
+        self.llm = get_model(temperature=0.7)
         self.mcp_client = None
         self.tools = []
         self.agent = None
