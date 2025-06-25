@@ -13,8 +13,27 @@ Usage:
 """
 
 import sys
+import os
 import argparse
-sys.path.append('05-advanced-mcp')
+
+# Handle different execution contexts
+# This allows the script to work whether run as:
+# - python -m 05-advanced-mcp
+# - python 05-advanced-mcp/main.py
+# - cd 05-advanced-mcp && python main.py
+if __name__ == "__main__" and __package__ is None:
+    # Running as a script, not as a module
+    file_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(file_dir)
+    
+    # Add parent to path if running from within directory
+    if os.path.basename(os.getcwd()) == '05-advanced-mcp':
+        sys.path.insert(0, os.getcwd())
+    # Add package directory if running from parent
+    elif os.path.exists(os.path.join(os.getcwd(), '05-advanced-mcp')):
+        sys.path.insert(0, os.path.join(os.getcwd(), '05-advanced-mcp'))
+    else:
+        sys.path.insert(0, file_dir)
 
 def main():
     """Main entry point."""
@@ -60,11 +79,21 @@ With --structured flag:
     
     # Handle multi-turn demo
     if args.multi_turn_demo:
-        from weather_agent.demo_scenarios import run_mcp_multi_turn_demo
+        try:
+            # Try module-style import first
+            from .weather_agent.demo_scenarios import run_mcp_multi_turn_demo
+        except (ImportError, ValueError):
+            # Fall back to absolute import
+            from weather_agent.demo_scenarios import run_mcp_multi_turn_demo
         asyncio.run(run_mcp_multi_turn_demo(structured=args.structured))
     else:
         # Import and run the chatbot
-        from weather_agent.chatbot import main as chatbot_main
+        try:
+            # Try module-style import first
+            from .weather_agent.chatbot import main as chatbot_main
+        except (ImportError, ValueError):
+            # Fall back to absolute import
+            from weather_agent.chatbot import main as chatbot_main
         
         # Pass flags if provided
         sys.argv = [sys.argv[0]]

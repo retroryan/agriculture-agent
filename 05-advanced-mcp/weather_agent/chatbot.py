@@ -14,10 +14,7 @@ import sys
 import json
 from typing import Optional
 
-# Add parent directory to path for imports
-sys.path.append('.')
-
-from weather_agent.mcp_agent import MCPWeatherAgent, OpenMeteoResponse, AgricultureAssessment
+from .mcp_agent import MCPWeatherAgent, OpenMeteoResponse, AgricultureAssessment
 
 
 class SimpleWeatherChatbot:

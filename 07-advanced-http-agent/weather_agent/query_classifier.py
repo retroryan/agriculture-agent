@@ -2,7 +2,6 @@
 
 import os
 from typing import Optional, Dict, Any
-from langchain_anthropic import ChatAnthropic
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
 import logging
@@ -12,15 +11,21 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from models import EnhancedQueryClassification, LocationInfo, Coordinates
 
+# Import unified model configuration
+try:
+    from ..config import get_model
+except ImportError:
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from config import get_model
+
 
 class QueryClassifier:
     """LLM-based query understanding and classification service."""
     
     def __init__(self, api_key: Optional[str] = None):
         """Initialize the query classifier with LangChain components."""
-        self.llm = ChatAnthropic(
-            model="claude-3-5-sonnet-20241022",
-            anthropic_api_key=api_key or os.getenv("ANTHROPIC_API_KEY"),
+        self.llm = get_model(
             temperature=0,
             max_tokens=1000
         )
