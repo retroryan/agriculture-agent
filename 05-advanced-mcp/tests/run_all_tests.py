@@ -11,8 +11,7 @@ import time
 from typing import List, Tuple, Optional
 
 # Add parent directory to path
-# Tests should be run from the parent directory
-# python -m tests.run_all_tests
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import all test modules
 from test_simple_coordinate import test_simple

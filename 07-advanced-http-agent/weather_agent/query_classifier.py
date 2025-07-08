@@ -19,7 +19,6 @@ except ImportError:
     sys.path.insert(0, str(Path(__file__).parent.parent))
     from config import get_model
 
-
 class QueryClassifier:
     """LLM-based query understanding and classification service."""
     

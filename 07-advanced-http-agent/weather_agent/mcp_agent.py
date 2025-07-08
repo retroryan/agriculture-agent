@@ -41,7 +41,6 @@ except ImportError:
     sys.path.insert(0, str(Path(__file__).parent.parent))
     from config import get_model
 
-
 # Structured Output Models for LangGraph Option 1
 class WeatherCondition(BaseModel):
     """Current weather condition."""
