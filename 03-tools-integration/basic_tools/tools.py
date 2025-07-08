@@ -87,12 +87,6 @@ def calculate_days_between(start_date: str, end_date: str) -> int:
 
 
 @tool
-def reverse_text(text: str) -> str:
-    """Reverse the given text."""
-    return text[::-1]
-
-
-@tool
 def agricultural_advice(crop: str, condition: str) -> str:
     """
     Provide agricultural advice based on crop type and weather conditions.
@@ -123,6 +117,5 @@ ALL_TOOLS = [
     count_words,
     get_current_time,
     calculate_days_between,
-    reverse_text,
     agricultural_advice
 ]

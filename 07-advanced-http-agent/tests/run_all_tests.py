@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Run all async tests for 05-advanced-mcp in sequence.
+Run all async tests for 07-advanced-http-agent in sequence.
 This handles the async nature of the tests and provides a summary.
 """
 
@@ -14,11 +14,20 @@ from typing import List, Tuple, Optional
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import all test modules
-from test_simple_coordinate import test_simple
-from test_coordinate_usage import test_coordinate_provision
-from test_coordinates import test_coordinates
-from test_diverse_cities import test_diverse_city_coordinates
-from test_coordinate_handling import test_forecast_server
+from coordinates.test_simple_coordinate import test_simple
+from coordinates.test_coordinate_usage import test_coordinate_provision
+from coordinates.test_coordinates import test_coordinates
+from coordinates.test_coordinate_handling import test_forecast_server
+from integration.test_diverse_cities import test_diverse_city_coordinates
+from integration.test_structured_output_demo import test_structured_output
+from integration.test_extended_queries import main as test_extended_queries
+from agent.test_mcp_agent import test_mcp_agent_functionality
+from agent.test_minimal_agent import test_minimal_agent
+from mcp_servers.test_mcp_servers import test_all_servers
+from mcp_servers.test_forecast_only import test_forecast_only
+from mcp_servers.test_mcp_client import test_mcp_client_tools
+from http_transport.test_forecast_minimal import test_forecast_minimal
+from integration.test_docker_agent import test_docker_integration
 
 
 async def run_test(test_name: str, test_func) -> Tuple[str, bool, float, Optional[str]]:
@@ -45,18 +54,37 @@ async def run_test(test_name: str, test_func) -> Tuple[str, bool, float, Optiona
 
 async def run_all_tests():
     """Run all tests and provide a summary."""
-    print("🚀 Starting 05-advanced-mcp Test Suite")
+    print("🚀 Starting 07-advanced-http-agent Test Suite")
     print("=" * 70)
     print("\n⚠️  Note: This will start MCP servers as subprocesses")
     print("⚠️  Some tests may take time due to API calls and LLM interactions\n")
     
-    # Define all tests to run
+    # Define all tests to run - organized by category
     tests = [
+        # Coordinate Tests
         ("Simple Coordinate Test", test_simple),
         ("Coordinate Provision Test", test_coordinate_provision),
-        ("Forecast Server Test", test_forecast_server),
+        ("Coordinate Handling Test", test_forecast_server),
         ("Coordinates General Test", test_coordinates),
+        
+        # MCP Server Tests
+        ("MCP Servers Test", test_all_servers),
+        ("Forecast Only Test", test_forecast_only),
+        ("MCP Client Tools Test", test_mcp_client_tools),
+        
+        # HTTP Transport Tests
+        ("Forecast Minimal HTTP Test", test_forecast_minimal),
+        
+        # Agent Tests
+        ("MCP Agent Functionality Test", test_mcp_agent_functionality),
+        ("Minimal Agent Test", test_minimal_agent),
+        
+        # Integration Tests
         ("Diverse Cities Test", test_diverse_city_coordinates),
+        ("Structured Output Demo", test_structured_output),
+        ("Extended Queries Test", test_extended_queries),
+        # Skip Docker test by default as it requires Docker
+        # ("Docker Integration Test", test_docker_integration),
     ]
     
     results: List[Tuple[str, bool, float, Optional[str]]] = []

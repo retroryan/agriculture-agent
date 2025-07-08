@@ -1,0 +1,83 @@
+
+============================================================
+TOOLS INTEGRATION TEST SUITE
+============================================================
+Started at: 2025-06-24 09:01:44
+
+============================================================
+Running: Tool Imports
+============================================================
+
+Testing tool imports...
+  Basic tools imported: 8 tools ✓
+  External tools not available: No module named 'external_tools.tools'
+✓ Tool Imports completed successfully
+
+============================================================
+Running: Basic Math Tools
+============================================================
+
+Testing basic math tools...
+  Addition: 59 ✓
+  Multiplication: 49.6 ✓
+✓ Basic Math Tools completed successfully
+
+============================================================
+Running: Weather Tools
+============================================================
+
+Testing weather tools...
+  Berlin, Germany: Weather in Berlin, Germany: 20°C, light rain, wind... ✓
+  Tokyo, Japan: Weather in Tokyo, Japan: 10°C, partly cloudy, wind... ✓
+  New York, USA: Weather in New York, USA: 17°C, partly cloudy, win... ✓
+✓ Weather Tools completed successfully
+
+============================================================
+Running: Text Analysis
+============================================================
+
+Testing text analysis tools...
+  Simple sentence: 'The quick brown fox jumps' → 5 words ✓
+  Empty string: '' → 0 words ✓
+  Single word: 'Hello' → 1 words ✓
+  Multiple spaces: 'Hello    world   test' → 3 words ✓
+✓ Text Analysis completed successfully
+
+============================================================
+Running: Date/Time Tools
+============================================================
+
+Testing date/time tools...
+  Current time: Current time: 2025-06-24 09:01:45 ✓
+  Year 2024: 2024-01-01 to 2024-12-31 → 365 days ✓
+  Same day: 2024-01-01 to 2024-01-01 → 0 days ✓
+  One week: 2024-01-01 to 2024-01-08 → 7 days ✓
+✓ Date/Time Tools completed successfully
+
+============================================================
+Running: Agricultural Advice
+============================================================
+
+Testing agricultural advice tool...
+  Corn watering: Open Meteo shows low precipitation. Consider irrigation - co... ✓
+  Wheat in wet conditions: High humidity in Open Meteo forecast. Watch for fungal disea... ✓
+  Tomatoes general: Check Open Meteo API for detailed weather data to optimize t... ✓
+✓ Agricultural Advice completed successfully
+
+============================================================
+Running: Web Fetch Tools
+============================================================
+
+Testing web fetch tools...
+  Web fetch test failed: No module named 'external_tools.tools'
+✓ Web Fetch Tools completed successfully
+
+============================================================
+TEST SUMMARY
+============================================================
+Total tests: 7
+Passed: 7
+Failed: 0
+Success rate: 100.0%
+
+Detailed results saved to: /Users/ryanknight/projects/graphrag/agriculture-agent/03-tools-integration/test_results.json

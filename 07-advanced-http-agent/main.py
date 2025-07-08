@@ -14,7 +14,6 @@ Usage:
 
 import sys
 import argparse
-sys.path.append('05-advanced-mcp')
 
 def main():
     """Main entry point."""

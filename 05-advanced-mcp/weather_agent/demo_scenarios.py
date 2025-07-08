@@ -16,10 +16,7 @@ from typing import Dict, List, Any, Tuple
 from datetime import datetime, timedelta
 import time
 
-# Add parent directory to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from weather_agent.mcp_agent import MCPWeatherAgent
+from .mcp_agent import MCPWeatherAgent
 
 # ANSI color codes for better output
 class Colors:

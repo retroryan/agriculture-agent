@@ -15,7 +15,6 @@ import json
 from typing import Optional, Dict, Any, Union
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
-from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_core.output_parsers import PydanticOutputParser
@@ -34,6 +33,13 @@ try:
 except ImportError:
     pass
 
+# Import unified model configuration
+try:
+    from ..config import get_model
+except ImportError:
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from config import get_model
 
 # Structured Output Models for LangGraph Option 1
 class WeatherCondition(BaseModel):
@@ -88,11 +94,8 @@ class MCPWeatherAgent:
     """
     
     def __init__(self):
-        # Create LLM instance
-        self.llm = ChatAnthropic(
-            model="claude-3-5-sonnet-20241022",
-            temperature=0
-        )
+        # Create LLM instance using unified model interface
+        self.llm = get_model(temperature=0)
         
         # Initialize properties
         self.mcp_client = None

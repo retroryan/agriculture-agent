@@ -1,9 +1,9 @@
 import asyncio
 import os
 from dotenv import load_dotenv
-from langchain_anthropic import ChatAnthropic
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.prebuilt import create_react_agent
+from config import get_model
 
 
 load_dotenv()
@@ -13,10 +13,7 @@ class SimpleFastMCPAgent:
     """A simple agent that uses FastMCP tools via LangGraph with official MCP adapters."""
     
     def __init__(self):
-        self.llm = ChatAnthropic(
-            model="claude-3-5-sonnet-20241022",
-            api_key=os.getenv("ANTHROPIC_API_KEY")
-        )
+        self.llm = get_model(temperature=0.7)
         self.mcp_client = None
         self.agent = None
         

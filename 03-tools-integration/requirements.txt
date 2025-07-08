@@ -1,0 +1,9 @@
+# Core dependencies for tools integration
+python-dotenv
+langchain>=0.3.0
+langchain-anthropic>=0.2.0
+langchain-community
+langgraph>=0.2.0
+httpx
+markdownify
+readabilipy
