@@ -1,0 +1,21 @@
+# Simplified Forecast Server Docker Image
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install only what we need
+RUN pip install --no-cache-dir \
+    fastmcp>=0.2.5 \
+    httpx
+
+# Copy only the simplified server
+COPY mcp_servers/forecast_server_simple.py /app/
+
+# Expose MCP port
+EXPOSE 7071
+
+# Set host for container networking
+ENV HOST=0.0.0.0
+
+# Run the server
+CMD ["python", "forecast_server_simple.py"]

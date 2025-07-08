@@ -1,52 +1,77 @@
-# 05-advanced-mcp Tests
+# Tests for Weather Intelligence with MCP (HTTP Transport)
 
-This directory contains all tests for the 05-advanced-mcp stage of the weather intelligence system.
+This directory contains comprehensive tests for the Weather Intelligence MCP system using HTTP transport.
 
-## Test Files
+## Test Organization
 
-### Coordinate Handling Tests
-- **test_coordinate_handling.py** - Basic coordinate parameter testing
-- **test_coordinate_usage.py** - Tests if LLM provides coordinates vs using geocoding
-- **test_coordinates.py** - General coordinate functionality tests  
-- **test_simple_coordinate.py** - Simple verification of coordinate handling
-- **test_diverse_cities.py** - Tests global city coverage without hardcoded lists
+Tests are organized into categories for better maintainability:
 
-### MCP Integration Tests
-- **test_mcp_servers.py** - Tests for MCP server functionality (forecast, historical, agricultural)
-- **test_mcp_agent.py** - Tests for the MCP weather agent integration
+### `/coordinates/`
+Tests for coordinate handling and geocoding functionality:
+- `test_simple_coordinate.py` - Basic smoke test for coordinate handling
+- `test_coordinate_handling.py` - Tests coordinate handling in the MCP forecast server
+- `test_coordinate_usage.py` - Tests whether LLM provides coordinates without geocoding
+- `test_coordinates.py` - Comprehensive tests for coordinate and location handling
 
-### Structured Output Tests
-- **test_structured_output_demo.py** - Tests for structured data output with Pydantic models
+### `/mcp_servers/`
+Tests for MCP server functionality:
+- `test_mcp_servers.py` - Comprehensive tests for all MCP servers (forecast, historical, agricultural)
+- `test_forecast_only.py` - Tests simplified forecast server using MCP client
+- `test_mcp_client.py` - Tests using langchain_mcp_adapters client directly
+
+### `/http_transport/`
+Tests for HTTP-based MCP transport:
+- `test_forecast_minimal.py` - Direct HTTP testing of the forecast server
+
+### `/agent/`
+Tests for LangGraph agent integration:
+- `test_mcp_agent.py` - Comprehensive MCP Agent functionality tests
+- `test_minimal_agent.py` - Full integration test with LangGraph ReAct agent
+
+### `/integration/`
+End-to-end integration tests:
+- `test_diverse_cities.py` - Tests geographic knowledge for diverse global cities
+- `test_structured_output_demo.py` - Demonstrates structured output using LangGraph
+- `test_extended_queries.py` - Tests edge cases and various query types
+- `test_docker_agent.py` - Tests Docker deployment (requires Docker)
 
 ## Running Tests
 
 ### Run All Tests
 ```bash
-# Run all async tests in sequence with summary
-cd 05-advanced-mcp
-python tests/run_all_tests.py
+python run_all_tests.py
+```
+
+### Run Tests by Category
+```bash
+# Coordinate tests only
+python -m pytest coordinates/
+
+# MCP server tests only
+python -m pytest mcp_servers/
+
+# Integration tests only
+python -m pytest integration/
 ```
 
 ### Run Individual Tests
 ```bash
-# Run individual tests
-cd 05-advanced-mcp
-python tests/test_simple_coordinate.py
-python tests/test_diverse_cities.py
-python tests/test_mcp_servers.py
+# Example: Run the minimal agent test
+python agent/test_minimal_agent.py
 
-# Test coordinate provision tracking
-python tests/test_coordinate_usage.py
+# Example: Run coordinate handling test
+python coordinates/test_coordinate_handling.py
 ```
 
-### Run with pytest
-```bash
-# Run with pytest (note: some async tests may not work properly)
-cd 05-advanced-mcp
-pytest tests/ -v
-```
+## Test Environment
+
+- Tests start MCP servers as subprocesses
+- Some tests make real API calls to Open-Meteo
+- Ensure you have set your `ANTHROPIC_API_KEY` environment variable
+- Tests use the HTTP transport layer (port 7071 by default)
 
 ## Notes
-- Tests require MCP servers to be started as subprocesses
-- Ensure ANTHROPIC_API_KEY is set in your .env file
-- Some tests make real API calls to Open-Meteo
+
+- The Docker integration test is commented out in `run_all_tests.py` by default
+- Tests may take time due to LLM interactions and API calls
+- Each test category can be run independently

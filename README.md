@@ -20,13 +20,15 @@ The Model Context Protocol (MCP) represents a paradigm shift in how AI agents in
 
 ## Project Learning Path
 
-Learn AI development through five progressive stages:
+Learn AI development through seven progressive stages:
 
 1. **01-foundations** - Validate LangChain setup and introduce LangGraph
 2. **02-domain-applications** - Build real-world weather analysis with AI
 3. **03-tools-integration** - Add dynamic capabilities with tools
 4. **04-mcp-architecture** - Create distributed systems with solid architectural foundations
 5. **05-advanced-mcp** - Structured output with tool calling for production-ready AI
+6. **06-mcp-http** - Master MCP-LangGraph integration patterns with HTTP transport
+7. **07-advanced-http-agent** - Enhanced production features with testing and debugging
 
 Each stage builds on the previous, revealing limitations and introducing solutions.
 
@@ -48,6 +50,8 @@ python 02-domain-applications/main.py --demo                  # Stage 2
 python 03-tools-integration/main.py                           # Stage 3
 python 04-mcp-architecture/main.py --demo                     # Stage 4
 python 05-advanced-mcp/main.py --demo                         # Stage 5
+python 06-mcp-http/demo.py                                    # Stage 6
+python 07-advanced-http-agent/main.py --demo --structured     # Stage 7
 ```
 
 ## Stage 1: Foundations
@@ -193,6 +197,55 @@ Imagine scaling Stage 2's approach to a full weather service - you'd need hundre
 
 [→ Detailed Overview](05-advanced-mcp/README.md)
 
+## Stage 6: MCP HTTP Integration Patterns
+
+**Purpose**: Learn best practices for integrating FastMCP servers with LangGraph using HTTP transport
+
+**Quick Test**:
+```bash
+# Terminal 1: Start FastMCP HTTP server
+python 06-mcp-http/serializer.py
+
+# Terminal 2: Run integration demo
+python 06-mcp-http/demo.py
+```
+
+**What Makes This Different**:
+- **Standalone tutorial**: Separate from the weather application to focus on integration patterns
+- **HTTP transport**: Uses streamable HTTP instead of stdio for MCP communication
+- **Official adapters**: Demonstrates proper use of `langchain-mcp-adapters`
+- **Architecture lessons**: Shows common pitfalls and the correct patterns
+
+**Key Takeaways**: Proper MCP-LangGraph integration, HTTP transport patterns, importance of official libraries
+
+[→ Detailed Overview](06-mcp-http/README.md)
+
+## Stage 7: Advanced HTTP Agent
+
+**Purpose**: Enhanced version of Stage 5 with improved structured output and testing
+
+**Quick Test**:
+```bash
+# Interactive mode with structured output
+python 07-advanced-http-agent/main.py --structured
+
+# Demo with tool call visibility
+python 07-advanced-http-agent/main.py --demo --structured
+
+# Run comprehensive tests
+python 07-advanced-http-agent/tests/run_all_tests.py
+```
+
+**Enhanced Features**:
+- **Tool call transparency**: See exactly which MCP tools are invoked
+- **Raw JSON visibility**: View Open-Meteo API responses directly
+- **Comprehensive testing**: Extensive test suite for coordinates, cities, and servers
+- **Dual output modes**: Both text and structured Pydantic responses
+
+**Key Takeaways**: Production testing patterns, debugging with tool visibility, structured output refinements
+
+[→ Detailed Overview](07-advanced-http-agent/README.md)
+
 ## Architecture Evolution
 
 ```
@@ -221,6 +274,18 @@ Stage 5: Advanced MCP
 ├── LLM-driven tool orchestration
 ├── No classification needed
 └── Production-ready patterns
+
+Stage 6: MCP HTTP Patterns
+├── HTTP transport for MCP
+├── FastMCP server integration
+├── Official adapter usage
+└── Architecture best practices
+
+Stage 7: Enhanced Production
+├── Tool call transparency
+├── Raw JSON visibility
+├── Comprehensive testing
+└── Debugging capabilities
 ```
 
 ## Key Technologies
@@ -259,6 +324,8 @@ agriculture-agent/
 ├── 03-tools-integration/    # Dynamic agent capabilities
 ├── 04-mcp-architecture/     # Distributed tool systems
 ├── 05-advanced-mcp/         # Structured output and production patterns
+├── 06-mcp-http/            # MCP-LangGraph HTTP integration patterns
+├── 07-advanced-http-agent/  # Enhanced production features
 └── tutorials/               # Progressive learning guides
 ```
 
@@ -279,6 +346,13 @@ python 04-mcp-architecture/mcp_servers/test_mcp.py
 # Stage 5: Advanced MCP
 python 05-advanced-mcp/main.py --demo
 python 05-advanced-mcp/main.py --structured --multi-turn-demo
+
+# Stage 6: MCP HTTP
+python 06-mcp-http/demo.py
+
+# Stage 7: Advanced HTTP Agent
+python 07-advanced-http-agent/tests/run_all_tests.py
+python 07-advanced-http-agent/main.py --demo --structured
 ```
 
 ## Key Concepts by Stage
@@ -290,6 +364,8 @@ python 05-advanced-mcp/main.py --structured --multi-turn-demo
 | 3 | Dynamic Tools | @tool decorator + conditional routing |
 | 4 | MCP Fundamentals | Process isolation + distributed tool patterns |
 | 5 | Structured Output | Pydantic models + LLM-driven orchestration |
+| 6 | MCP HTTP Integration | FastMCP + langchain-mcp-adapters |
+| 7 | Production Features | Tool transparency + comprehensive testing |
 
 ## Quick Command Reference
 
@@ -304,6 +380,8 @@ python 01-foundations/langgraph/basic_chatbot.py --demo       # LangGraph exampl
 python 02-domain-applications/main.py --demo                  # Agricultural scenarios
 python 04-mcp-architecture/main.py --demo                     # MCP demonstration
 python 05-advanced-mcp/main.py --demo --structured            # Structured output demos
+python 06-mcp-http/demo.py                                    # HTTP integration demo
+python 07-advanced-http-agent/main.py --demo --structured     # Enhanced production demo
 
 # Single queries
 python 01-foundations/langgraph/basic_chatbot.py "Question?"
