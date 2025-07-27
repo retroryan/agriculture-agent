@@ -12,7 +12,7 @@ This module demonstrates how to use MCP servers with LangGraph:
 import asyncio
 import os
 import json
-from typing import Optional, Dict, Any, Union
+from typing import Optional, Dict, Any, Union, List
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -20,9 +20,7 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
 import uuid
-from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import List
 
 # Load environment variables
 from pathlib import Path
@@ -44,45 +42,17 @@ except ImportError:
     from config import get_model
 
 
-# Structured Output Models for LangGraph Option 1
-class WeatherCondition(BaseModel):
-    """Current weather condition."""
-    temperature: Optional[float] = Field(None, description="Temperature in Celsius")
-    humidity: Optional[int] = Field(None, description="Relative humidity percentage")
-    precipitation: Optional[float] = Field(None, description="Current precipitation in mm")
-    wind_speed: Optional[float] = Field(None, description="Wind speed in km/h")
-    conditions: Optional[str] = Field(None, description="Weather description")
-
-
-class DailyForecast(BaseModel):
-    """Daily weather forecast."""
-    date: str = Field(..., description="Date in YYYY-MM-DD format")
-    temperature_max: Optional[float] = Field(None, description="Maximum temperature in Celsius")
-    temperature_min: Optional[float] = Field(None, description="Minimum temperature in Celsius")
-    precipitation_sum: Optional[float] = Field(None, description="Total precipitation in mm")
-    conditions: Optional[str] = Field(None, description="Weather conditions summary")
-
-
-class OpenMeteoResponse(BaseModel):
-    """Structured response consolidating Open-Meteo data."""
-    location: str = Field(..., description="Location name")
-    coordinates: Optional[Any] = Field(None, description="Latitude and longitude")
-    timezone: Optional[str] = Field(None, description="Timezone")
-    current_conditions: Optional[WeatherCondition] = Field(None, description="Current weather")
-    daily_forecast: Optional[List[DailyForecast]] = Field(None, description="Daily forecast data")
-    summary: str = Field(..., description="Natural language summary")
-    data_source: str = Field(default="Open-Meteo API", description="Data source")
-
-
-class AgricultureAssessment(BaseModel):
-    """Agricultural conditions assessment."""
-    location: str = Field(..., description="Location name")
-    soil_temperature: Optional[float] = Field(None, description="Soil temperature in Celsius")
-    soil_moisture: Optional[float] = Field(None, description="Soil moisture content")
-    evapotranspiration: Optional[float] = Field(None, description="Daily evapotranspiration in mm")
-    planting_conditions: str = Field(..., description="Assessment of planting conditions")
-    recommendations: List[str] = Field(default_factory=list, description="Farming recommendations")
-    summary: str = Field(..., description="Natural language summary")
+# Import structured output models
+from .models import (
+    WeatherCondition,
+    DailyForecast,
+    OpenMeteoResponse,
+    AgricultureAssessment,
+    ConversationState,
+    ToolResponse,
+    ToolCallInfo,
+    create_tool_response
+)
 
 
 class MCPWeatherAgent:
@@ -150,21 +120,11 @@ class MCPWeatherAgent:
             "mcp_servers"
         )
         
-        # Configure MCP servers
+        # Configure unified MCP server
         server_config = {
-            "forecast": {
+            "weather": {
                 "command": "python",
-                "args": [os.path.join(mcp_path, "forecast_server.py")],
-                "transport": "stdio"
-            },
-            "historical": {
-                "command": "python",
-                "args": [os.path.join(mcp_path, "historical_server.py")],
-                "transport": "stdio"
-            },
-            "agricultural": {
-                "command": "python", 
-                "args": [os.path.join(mcp_path, "agricultural_server.py")],
+                "args": [os.path.join(mcp_path, "weather_server.py")],
                 "transport": "stdio"
             }
         }

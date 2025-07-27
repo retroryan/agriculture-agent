@@ -14,7 +14,8 @@ import sys
 import json
 from typing import Optional
 
-from .mcp_agent import MCPWeatherAgent, OpenMeteoResponse, AgricultureAssessment
+from .mcp_agent import MCPWeatherAgent
+from .models import OpenMeteoResponse, AgricultureAssessment, parse_tool_content
 
 
 class SimpleWeatherChatbot:
@@ -60,45 +61,13 @@ class SimpleWeatherChatbot:
             # Check if it's specifically a ToolMessage (has type 'tool')
             if hasattr(msg, 'type') and msg.type == 'tool' and hasattr(msg, 'name') and hasattr(msg, 'content'):
                 # This is a tool response message
-                # Extract the JSON part from the content
-                content_str = str(msg.content)
-                json_start = content_str.find('{')
-                
-                if json_start != -1:
-                    try:
-                        # Extract and parse the JSON portion
-                        json_str = content_str[json_start:]
-                        # Find the matching closing brace
-                        brace_count = 0
-                        json_end = -1
-                        for i, char in enumerate(json_str):
-                            if char == '{':
-                                brace_count += 1
-                            elif char == '}':
-                                brace_count -= 1
-                                if brace_count == 0:
-                                    json_end = i + 1
-                                    break
-                        
-                        if json_end > 0:
-                            json_data = json.loads(json_str[:json_end])
-                            tool_responses.append({
-                                'tool': msg.name,
-                                'content': json_data,
-                                'full_content': content_str[:json_start]  # The text before JSON
-                            })
-                    except:
-                        # If JSON parsing fails, store the raw content
-                        tool_responses.append({
-                            'tool': msg.name,
-                            'content': content_str
-                        })
-                else:
-                    # No JSON found, store as is
-                    tool_responses.append({
-                        'tool': msg.name,
-                        'content': content_str
-                    })
+                # Use the helper function to parse tool content
+                parsed_content = parse_tool_content(msg.content)
+                tool_responses.append({
+                    'tool': msg.name,
+                    'content': parsed_content,
+                    'full_content': str(msg.content)
+                })
         
         if tool_responses:
             print("\n📊 Raw Tool Responses:")
