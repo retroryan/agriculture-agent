@@ -16,9 +16,14 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
 # Import unified model configuration
-import sys
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-from config import get_model
+try:
+    from ..config import get_model
+except ImportError:
+    # Fallback for standalone execution
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from config import get_model
 
 
 class MCPWeatherAgent:
@@ -52,22 +57,12 @@ class MCPWeatherAgent:
             "mcp_servers"
         )
         
-        # Configure MCP servers - each will run as a subprocess
+        # Configure unified MCP server - runs as a single subprocess
         server_config = {
-            "forecast": {
+            "weather": {
                 "command": "python",
-                "args": [os.path.join(mcp_path, "forecast_server.py")],
+                "args": [os.path.join(mcp_path, "weather_server.py")],
                 "transport": "stdio"  # This is the only transport MCP supports
-            },
-            "historical": {
-                "command": "python",
-                "args": [os.path.join(mcp_path, "historical_server.py")],
-                "transport": "stdio"
-            },
-            "agricultural": {
-                "command": "python", 
-                "args": [os.path.join(mcp_path, "agricultural_server.py")],
-                "transport": "stdio"
             }
         }
         

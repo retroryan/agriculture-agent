@@ -53,6 +53,45 @@ SOLAR_PARAMS = [
     "uv_index_clear_sky"
 ]
 
+# Standard daily weather parameters for forecast
+WEATHER_DAILY_PARAMS = [
+    "temperature_2m_max",
+    "temperature_2m_min",
+    "apparent_temperature_max",
+    "apparent_temperature_min",
+    "precipitation_sum",
+    "rain_sum",
+    "showers_sum",
+    "snowfall_sum",
+    "precipitation_hours",
+    "weather_code",
+    "sunrise",
+    "sunset",
+    "wind_speed_10m_max",
+    "wind_gusts_10m_max",
+    "uv_index_max",
+    "et0_fao_evapotranspiration"
+]
+
+# Standard hourly weather parameters for forecast
+WEATHER_HOURLY_PARAMS = [
+    "temperature_2m",
+    "relative_humidity_2m",
+    "dew_point_2m",
+    "apparent_temperature",
+    "precipitation",
+    "rain",
+    "showers",
+    "snowfall",
+    "weather_code",
+    "pressure_msl",
+    "surface_pressure",
+    "cloud_cover",
+    "visibility",
+    "wind_speed_10m",
+    "wind_direction_10m"
+]
+
 # Predefined agricultural locations
 AGRICULTURAL_LOCATIONS = {
     "Grand Island, Nebraska": {

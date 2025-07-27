@@ -6,10 +6,7 @@ from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
 import logging
 
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from models import EnhancedQueryClassification, LocationInfo, Coordinates
+from .models import EnhancedQueryClassification, LocationInfo, Coordinates
 
 # Import unified model configuration
 try:
