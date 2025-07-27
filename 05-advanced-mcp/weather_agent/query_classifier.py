@@ -6,16 +6,10 @@ from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
 import logging
 
-try:
-    from .models import EnhancedQueryClassification, LocationInfo, Coordinates
-    from ..config import get_model
-except ImportError:
-    # Fallback for standalone execution
-    import sys
-    from pathlib import Path
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-    from weather_agent.models import EnhancedQueryClassification, LocationInfo, Coordinates
-    from config import get_model
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from weather_agent.models import EnhancedQueryClassification, LocationInfo, Coordinates
+from config import get_model
 
 
 class QueryClassifier:

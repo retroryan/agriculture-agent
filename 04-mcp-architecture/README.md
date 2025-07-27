@@ -26,10 +26,11 @@ This directory demonstrates the Model Context Protocol (MCP) architecture with L
 
 ## Architecture
 
-### MCP Servers (Process-Isolated Tools)
-- **Forecast Server** (`mcp_servers/forecast_server.py`): Current and future weather data via Open-Meteo API
-- **Historical Server** (`mcp_servers/historical_server.py`): Past weather analysis and climate trends
-- **Agricultural Server** (`mcp_servers/agricultural_server.py`): Farm-specific conditions including soil moisture, evapotranspiration, and growing degree days
+### MCP Server (Process-Isolated Tools)
+- **Unified Weather Server** (`mcp_servers/weather_server.py`): Consolidated server providing:
+  - Current and future weather forecasts via Open-Meteo API
+  - Historical weather analysis and climate trends
+  - Agricultural conditions including soil moisture, evapotranspiration, and growing degree days
 
 ### Weather Agent (LangGraph Orchestrator)
 - **MCP Client** (`weather_agent/mcp_agent.py`): Manages subprocess lifecycle and tool discovery

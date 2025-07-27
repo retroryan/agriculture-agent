@@ -70,13 +70,14 @@ Stage 5 builds upon the MCP (Model Context Protocol) architecture from Stage 4 b
 │   ├── inputs.py             # Input validation models
 │   ├── metadata.py           # Statistical/quality metrics
 │   └── (additional supporting models)
-├── mcp_servers/              # Simplified MCP server implementations
-│   ├── forecast_server.py    # Returns raw forecast JSON
-│   ├── historical_server.py  # Returns raw historical JSON
-│   ├── agricultural_server.py # Returns raw agricultural JSON
+├── mcp_servers/              # Unified MCP server implementation
+│   ├── weather_server.py     # Consolidated server providing:
+│   │                         # - Forecast data (raw JSON)
+│   │                         # - Historical data (raw JSON)
+│   │                         # - Agricultural data (raw JSON)
 │   ├── api_utils.py          # Shared Open-Meteo client
-│   └── tests/                # Consolidated server tests
-│       └── test_mcp_servers.py # Comprehensive server test suite
+│   ├── models.py             # Request/response models
+│   └── utils/                # Utility modules
 ├── weather_agent/            # Enhanced agent with structured output
 │   ├── mcp_agent.py         # Agent with both text and structured methods
 │   ├── chatbot.py           # Interactive interface with structured output support

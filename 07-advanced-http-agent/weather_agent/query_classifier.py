@@ -9,12 +9,9 @@ import logging
 from .models import EnhancedQueryClassification, LocationInfo, Coordinates
 
 # Import unified model configuration
-try:
-    from ..config import get_model
-except ImportError:
-    from pathlib import Path
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-    from config import get_model
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from config import get_model
 
 class QueryClassifier:
     """LLM-based query understanding and classification service."""
